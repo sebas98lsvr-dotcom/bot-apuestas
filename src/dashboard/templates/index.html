@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard PRO</title>
+    <style>
+        body { background:#0f172a; color:#e2e8f0; font-family:Arial; padding:20px; }
+        .grid { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px; }
+        .card { background:#1e293b; padding:15px; border-radius:10px; width:150px; text-align:center; }
+        .win { color:#22c55e; }
+        .loss { color:#ef4444; }
+        .pendiente { color:#facc15; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#1e293b; padding:10px; }
+        td { padding:8px; border-bottom:1px solid #334155; }
+    </style>
+</head>
+
+<body>
+
+<h2>🔥 Dashboard PRO</h2>
+
+<div class="grid">
+    <div class="card">Total<br><b>{{ stats.total }}</b></div>
+    <div class="card win">Ganados<br><b>{{ stats.ganados }}</b></div>
+    <div class="card loss">Perdidos<br><b>{{ stats.perdidos }}</b></div>
+    <div class="card">Pendientes<br><b>{{ stats.pendientes }}</b></div>
+    <div class="card">Winrate<br><b>{{ stats.winrate }}%</b></div>
+    <div class="card">ROI<br><b>{{ stats.roi }}%</b></div>
+    <div class="card">Profit<br><b>{{ stats.profit_total }}</b></div>
+    <div class="card">Stake Total<br><b>{{ stats.stake_total }}</b></div>
+</div>
+
+<h3>📈 Rendimiento por mercado</h3>
+
+<table>
+<tr>
+<th>Mercado</th>
+<th>Total</th>
+<th>Winrate</th>
+<th>Profit</th>
+</tr>
+
+{% for m, data in stats.mercados.items() %}
+<tr>
+<td>{{ m }}</td>
+<td>{{ data.total }}</td>
+<td>{{ data.winrate }}%</td>
+<td>{{ data.profit }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<h3>📋 Picks</h3>
+
+<table>
+<tr>
+<th>Fecha</th>
+<th>Partido</th>
+<th>Liga</th>
+<th>Mercado</th>
+<th>Odd</th>
+<th>Value</th>
+<th>Stake</th>
+<th>Resultado</th>
+<th>Profit</th>
+</tr>
+
+{% for p in picks %}
+<tr>
+<td>{{ p.fecha }}</td>
+<td>{{ p.partido }}</td>
+<td>{{ p.liga }}</td>
+<td>{{ p.mercado }}</td>
+<td>{{ p.odd }}</td>
+<td>{{ p.value }}</td>
+<td>{{ p.stake }}</td>
+<td class="{{ p.resultado }}">{{ p.resultado }}</td>
+<td>{{ p.profit }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

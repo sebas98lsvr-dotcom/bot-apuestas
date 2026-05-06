@@ -1,41 +1,41 @@
-import requests
-import os
+import requests, os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
-load_dotenv()
+# Carga .env desde raíz
+ruta_env = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(ruta_env)
 
 API_KEY = os.getenv("API_FOOTBALL_KEY")
 
-HEADERS = {
-    "x-apisports-key": API_KEY
-}
-
+HEADERS = {"x-apisports-key": API_KEY}
 BASE_URL = "https://v3.football.api-sports.io"
 
-
 def obtener_partidos():
-    url = f"{BASE_URL}/fixtures"
+    try:
+        hoy = datetime.now()
 
-    # 🔥 CAMBIA LA FECHA SI NO HAY PARTIDOS
-    params = {
-        "date": "2026-05-04"
-    }
+        for i in range(2):  # hoy + mañana
+            fecha = (hoy + timedelta(days=i)).strftime("%Y-%m-%d")
+            print(f"📅 Buscando partidos: {fecha}")
 
-    res = requests.get(url, headers=HEADERS, params=params)
-    data = res.json()
+            params = {"date": fecha}
+            r = requests.get(f"{BASE_URL}/fixtures", headers=HEADERS, params=params, timeout=20)
 
-    return data.get("response", [])
+            if r.status_code != 200:
+                print("❌ Error fixtures:", r.status_code)
+                continue
 
+            data = r.json()
+            partidos = data.get("response", [])
 
-def obtener_ultimos_partidos(team_id):
-    url = f"{BASE_URL}/fixtures"
+            if partidos:
+                print(f"✅ Encontrados: {len(partidos)}")
+                return partidos
 
-    params = {
-        "team": team_id,
-        "last": 5
-    }
+        print("⚠️ Sin partidos hoy/mañana")
+        return []
 
-    res = requests.get(url, headers=HEADERS, params=params)
-    data = res.json()
-
-    return data.get("response", [])
+    except Exception as e:
+        print("💥 Error obtener_partidos:", e)
+        return []
