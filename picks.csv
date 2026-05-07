@@ -1,19 +1,9 @@
-fecha,fixture_id,partido,liga,mercado,odd,prob,value,stake,resultado,profit2026-05-06 14:22:50.070307,1543529,Águia de Marabá vs Paysandu,Copa Norte,Over 2.5,2.2,0.99,0.53,50.0,pendiente,0,profit
-2026-05-06 14:22:50.070363,1543117,Maghreb Fès vs Raja Casablanca,Botola Pro,Corners Over 3.5,1.75,1.0,0.43,50.0,loss,0,,,,,,,,,,,-50.0
-2026-05-06 14:22:50.070375,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,win,0,,,,,,,,,,,47.5
-2026-05-06 14:22:50.070383,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 14:22:50.070390,1543802,Union Cocle vs UMECIT,Liga Panameña de Fútbol,Corners Over 3.5,1.6,1,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 14:22:50.070398,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,loss,0,,,,,,,,,,,-50.0
-2026-05-06 14:22:50.070405,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,Over 2.5,2.05,0.8,0.31,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 14:22:50.070412,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,win,0,,,,,,,,,,,47.5
-2026-05-06 16:09:20.435516,1543529,Águia de Marabá vs Paysandu,Copa Norte,Over 2.5,2.2,0.99,0.53,50.0,win,0,,,,,,,,,,,60.0
-2026-05-06 16:09:20.435556,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,win,0,,,,,,,,,,,47.5
-2026-05-06 16:09:20.435569,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435577,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,loss,0,,,,,,,,,,,-50.0
-2026-05-06 16:09:20.435585,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,Over 2.5,2.05,0.8,0.31,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435592,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,win,0,,,,,,,,,,,47.5
-2026-05-06 16:09:20.435599,1543217,ABC vs Juazeirense,Copa do Nordeste,BTTS,1.9,0.72,0.19,50.0,loss,0,,,,,,,,,,,-50.0
-2026-05-06 16:09:20.435605,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,BTTS,1.8,0.71,0.15,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 18:21:32.032143,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 18:21:32.032182,1493817,Fort Wayne vs Portland Hearts of Pine,USL League One,Over 2.5,1.85,0.66,0.12,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 18:21:32.032194,1493817,Fort Wayne vs Portland Hearts of Pine,USL League One,BTTS,1.67,0.65,0.05,39.36,pendiente,0,,,,,,,,,,,
+fecha,fixture_id,partido,liga,mercado,odd,prob,value,stake,resultado,profit
+2026-05-07 17:41:30.115913,1525858,FC Gomel vs FC Isloch Minsk R.,Premier League,Over 2.5,2.5,0.75,0.22,30.0,pendiente,0
+2026-05-07 17:41:30.115946,1494163,IF Elfsborg vs IF Brommapojkarna,Allsvenskan,Over 2.5,1.95,0.81,0.14,30.0,pendiente,0
+2026-05-07 17:41:30.115958,1541018,Van vs Shirak,Premier League,Over 2.5,1.87,0.79,0.12,30.0,pendiente,0
+2026-05-07 17:41:30.115967,1404250,Terengganu vs Imigresen,Super League,BTTS,1.7,0.85,0.11,30.0,pendiente,0
+2026-05-07 17:41:30.115975,1543786,Hull City vs Millwall,Championship,Over 2.5,2.1,0.67,0.1,30.0,pendiente,0
+2026-05-07 17:41:30.115988,1494652,Ham-Kam vs Valerenga,Eliteserien,Over 2.5,1.62,0.85,0.09,30.0,pendiente,0
+2026-05-07 17:41:30.116002,1388907,1. FC Kaiserslautern vs Arminia Bielefeld,2. Bundesliga,Over 2.5,1.6,0.85,0.09,30.0,pendiente,0
+2026-05-07 17:41:30.116013,1525858,FC Gomel vs FC Isloch Minsk R.,Premier League,BTTS,2.0,0.67,0.09,30.0,pendiente,0
