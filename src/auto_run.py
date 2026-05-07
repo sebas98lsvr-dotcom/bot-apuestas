@@ -2,23 +2,55 @@ import time
 import subprocess
 from datetime import datetime
 
-ultima_ejecucion_picks = None
+# =========================
+# CONTROL EJECUCION
+# =========================
+
+ultimo_dia_picks = None
 
 while True:
+
     print("\n============================")
     print("⏰ BOT ACTIVO:", datetime.now())
     print("============================")
 
     ahora = datetime.now()
 
-    # picks 1 vez al día (8 AM)
-    if ultima_ejecucion_picks is None or ahora.hour == 8:
+    # =========================
+    # PICKS SOLO 1 VEZ AL DIA
+    # =========================
+
+    hoy = ahora.date()
+
+    if (
+        ahora.hour == 8
+        and ultimo_dia_picks != hoy
+    ):
+
         print("📊 Generando picks...")
-        subprocess.run(["python", "main.py"])
-        ultima_ejecucion_picks = ahora
+
+        subprocess.run([
+            "python",
+            "main.py"
+        ])
+
+        ultimo_dia_picks = hoy
+
+    # =========================
+    # ACTUALIZAR RESULTADOS
+    # =========================
 
     print("🔄 Actualizando resultados...")
-    subprocess.run(["python", "actualizar_resultados.py"])
+
+    subprocess.run([
+        "python",
+        "actualizar_resultados.py"
+    ])
+
+    # =========================
+    # ESPERA
+    # =========================
 
     print("⏳ Esperando 20 minutos...\n")
+
     time.sleep(1200)
