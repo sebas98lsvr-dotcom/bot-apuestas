@@ -30,6 +30,30 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
 # ==============================
+# ARCHIVO ENVIADOS
+# ==============================
+
+RUTA_ENVIADOS = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "enviados.txt"
+)
+
+# crear archivo si no existe
+if not os.path.exists(RUTA_ENVIADOS):
+
+    with open(RUTA_ENVIADOS, "w") as f:
+        pass
+
+# cargar enviados
+with open(RUTA_ENVIADOS, "r") as f:
+
+    ENVIADOS = set(
+        linea.strip()
+        for linea in f.readlines()
+    )
+
+# ==============================
 # TELEGRAM
 # ==============================
 
@@ -84,7 +108,7 @@ def guardar(picks):
 
     with open(
         ruta,
-        "w",
+        "a",
         newline="",
         encoding="utf-8"
     ) as f:
@@ -94,7 +118,9 @@ def guardar(picks):
             fieldnames=campos
         )
 
-        writer.writeheader()
+        # escribir header solo si vacío
+        if f.tell() == 0:
+            writer.writeheader()
 
         for p in picks:
 
@@ -195,70 +221,22 @@ def main():
 
     partidos = obtener_partidos()
 
-    # ======================
-    # LIGAS PERMITIDAS
-    # ======================
-
     LIGAS_PERMITIDAS = [
 
-        # Inglaterra
-        "Premier League",
         "Championship",
-
-        # España
-        "La Liga",
-        "Segunda División",
-
-        # Italia
-        "Serie A",
-        "Serie B",
-
-        # Alemania
         "Bundesliga",
         "2. Bundesliga",
-
-        # Francia
-        "Ligue 1",
-        "Ligue 2",
-
-        # Holanda
-        "Eredivisie",
-
-        # Portugal
-        "Primeira Liga",
-
-        # Turquía
-        "Süper Lig",
-
-        # Bélgica
-        "Jupiler Pro League",
-
-        # Escocia
-        "Premiership",
-
-        # Suiza
-        "Super League",
-
-        # Suecia
         "Allsvenskan",
-
-        # Noruega
         "Eliteserien",
-
-        # Dinamarca
-        "Superliga",
-
-        # MLS
-        "Major League Soccer",
-
-        # Sudamérica
+        "Serie A",
+        "La Liga",
+        "Premier League",
+        "Ligue 1",
+        "Eredivisie",
+        "Primeira Liga",
         "Liga Profesional Argentina",
-        "Primera División",
         "CONMEBOL Libertadores",
-        "CONMEBOL Sudamericana",
-
-        # México
-        "Liga MX"
+        "CONMEBOL Sudamericana"
     ]
 
     picks = []
@@ -270,7 +248,16 @@ def main():
             if p["fixture"]["status"]["short"] != "NS":
                 continue
 
-            fixture_id = p["fixture"]["id"]
+            fixture_id = str(
+                p["fixture"]["id"]
+            )
+
+            # ======================
+            # NO REPETIR PICKS
+            # ======================
+
+            if fixture_id in ENVIADOS:
+                continue
 
             fecha_partido = (
                 p["fixture"]["date"][:16]
@@ -281,10 +268,6 @@ def main():
             visitante = p["teams"]["away"]["name"]
 
             league_name = p["league"]["name"]
-
-            # ======================
-            # FILTRO LIGAS
-            # ======================
 
             if league_name not in LIGAS_PERMITIDAS:
                 continue
@@ -301,10 +284,6 @@ def main():
                 if "bets" in book:
                     bets.extend(book["bets"])
 
-            # ======================
-            # GOLES
-            # ======================
-
             lamL, lamV = calcular_lambdas(p)
 
             if lamL is None:
@@ -312,6 +291,8 @@ def main():
 
             prob_o = prob_over_25(lamL, lamV)
             prob_b = prob_btts(lamL, lamV)
+
+            picks_partido = []
 
             for b in bets:
 
@@ -346,7 +327,7 @@ def main():
                                         odd
                                     )
 
-                                    picks.append({
+                                    picks_partido.append({
                                         "fixture_id": fixture_id,
                                         "date": fecha_partido,
                                         "match": f"{local} vs {visitante}",
@@ -392,7 +373,7 @@ def main():
                                         odd
                                     )
 
-                                    picks.append({
+                                    picks_partido.append({
                                         "fixture_id": fixture_id,
                                         "date": fecha_partido,
                                         "match": f"{local} vs {visitante}",
@@ -407,30 +388,25 @@ def main():
                             except:
                                 continue
 
+            # ======================
+            # GUARDAR ENVIADOS
+            # ======================
+
+            if picks_partido:
+
+                picks.extend(picks_partido)
+
+                with open(
+                    RUTA_ENVIADOS,
+                    "a"
+                ) as f:
+
+                    f.write(
+                        fixture_id + "\n"
+                    )
+
         except Exception as e:
             print("❌ Error partido:", e)
-
-    # ======================
-    # ELIMINAR DUPLICADAS
-    # ======================
-
-    picks_unicos = []
-
-    vistos = set()
-
-    for p in picks:
-
-        clave = (
-            p["fixture_id"],
-            p["market"]
-        )
-
-        if clave not in vistos:
-
-            vistos.add(clave)
-            picks_unicos.append(p)
-
-    picks = picks_unicos
 
     # ======================
     # ORDENAR PICKS
@@ -500,7 +476,7 @@ def main():
         guardar(picks)
 
     else:
-        print("⚠️ No hubo picks")
+        print("⚠️ No hubo picks nuevos")
 
 # ==============================
 # START

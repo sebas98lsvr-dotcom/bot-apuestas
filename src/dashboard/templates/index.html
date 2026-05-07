@@ -1,88 +1,485 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
+
 <head>
-    <title>Dashboard PRO</title>
-    <style>
-        body { background:#0f172a; color:#e2e8f0; font-family:Arial; padding:20px; }
-        .grid { display:flex; flex-wrap:wrap; gap:15px; margin-bottom:20px; }
-        .card { background:#1e293b; padding:15px; border-radius:10px; width:150px; text-align:center; }
-        .win { color:#22c55e; }
-        .loss { color:#ef4444; }
-        .pendiente { color:#facc15; }
-        table { width:100%; border-collapse:collapse; }
-        th { background:#1e293b; padding:10px; }
-        td { padding:8px; border-bottom:1px solid #334155; }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard PRO</title>
+
+<style>
+
+body{
+    background:#020617;
+    color:#e2e8f0;
+    font-family:Arial;
+    margin:0;
+    padding:20px;
+}
+
+h1,h2,h3{
+    margin-bottom:15px;
+}
+
+.header{
+    margin-bottom:30px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:18px;
+    margin-bottom:35px;
+}
+
+.card{
+    background:#0f172a;
+    border:1px solid #1e293b;
+    border-radius:14px;
+    padding:20px;
+    box-shadow:0 0 10px rgba(0,0,0,0.3);
+    transition:0.2s;
+}
+
+.card:hover{
+    transform:translateY(-3px);
+}
+
+.card-title{
+    font-size:14px;
+    color:#94a3b8;
+    margin-bottom:8px;
+}
+
+.card-value{
+    font-size:28px;
+    font-weight:bold;
+}
+
+.green{
+    color:#22c55e;
+}
+
+.red{
+    color:#ef4444;
+}
+
+.yellow{
+    color:#facc15;
+}
+
+.blue{
+    color:#38bdf8;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+    background:#0f172a;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+th{
+    background:#1e293b;
+    padding:14px;
+    text-align:left;
+    font-size:14px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #1e293b;
+    font-size:14px;
+}
+
+tr:hover{
+    background:#172033;
+}
+
+.win{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.loss{
+    color:#ef4444;
+    font-weight:bold;
+}
+
+.pendiente{
+    color:#facc15;
+    font-weight:bold;
+}
+
+.section{
+    margin-top:40px;
+}
+
+.badge{
+    padding:5px 10px;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.badge-win{
+    background:#14532d;
+    color:#22c55e;
+}
+
+.badge-loss{
+    background:#450a0a;
+    color:#ef4444;
+}
+
+.badge-pend{
+    background:#713f12;
+    color:#facc15;
+}
+
+canvas{
+    background:#0f172a;
+    padding:20px;
+    border-radius:14px;
+    margin-top:20px;
+}
+
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body>
 
-<h2>🔥 Dashboard PRO</h2>
+<div class="header">
 
-<div class="grid">
-    <div class="card">Total<br><b>{{ stats.total }}</b></div>
-    <div class="card win">Ganados<br><b>{{ stats.ganados }}</b></div>
-    <div class="card loss">Perdidos<br><b>{{ stats.perdidos }}</b></div>
-    <div class="card">Pendientes<br><b>{{ stats.pendientes }}</b></div>
-    <div class="card">Winrate<br><b>{{ stats.winrate }}%</b></div>
-    <div class="card">ROI<br><b>{{ stats.roi }}%</b></div>
-    <div class="card">Profit<br><b>{{ stats.profit_total }}</b></div>
-    <div class="card">Stake Total<br><b>{{ stats.stake_total }}</b></div>
+<h1>🔥 Dashboard PRO</h1>
+
+<p>
+Seguimiento profesional del bot de apuestas
+</p>
+
 </div>
 
-<h3>📈 Rendimiento por mercado</h3>
+<!-- ========================= -->
+<!-- CARDS -->
+<!-- ========================= -->
+
+<div class="grid">
+
+    <div class="card">
+        <div class="card-title">🎯 Total Picks</div>
+        <div class="card-value">
+            {{ stats.total }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title green">🟢 Ganadas</div>
+        <div class="card-value green">
+            {{ stats.ganados }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title red">🔴 Perdidas</div>
+        <div class="card-value red">
+            {{ stats.perdidos }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title yellow">🟡 Pendientes</div>
+        <div class="card-value yellow">
+            {{ stats.pendientes }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title blue">📈 Winrate</div>
+        <div class="card-value blue">
+            {{ stats.winrate }}%
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">💰 ROI</div>
+        <div class="card-value">
+            {{ stats.roi }}%
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">💵 Profit</div>
+
+        <div class="card-value {% if stats.profit_total >= 0 %}green{% else %}red{% endif %}">
+            {{ stats.profit_total }}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🏦 Stake Total</div>
+        <div class="card-value">
+            {{ stats.stake_total }}
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- MERCADOS -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>📊 Rendimiento por mercado</h2>
 
 <table>
+
 <tr>
-<th>Mercado</th>
-<th>Total</th>
-<th>Winrate</th>
-<th>Profit</th>
+    <th>Mercado</th>
+    <th>Total</th>
+    <th>Winrate</th>
+    <th>Profit</th>
 </tr>
 
 {% for m, data in stats.mercados.items() %}
+
 <tr>
-<td>{{ m }}</td>
-<td>{{ data.total }}</td>
-<td>{{ data.winrate }}%</td>
-<td>{{ data.profit }}</td>
+
+    <td>{{ m }}</td>
+
+    <td>{{ data.total }}</td>
+
+    <td>
+
+        <span class="blue">
+            {{ data.winrate }}%
+        </span>
+
+    </td>
+
+    <td class="{% if data.profit >= 0 %}green{% else %}red{% endif %}">
+        {{ data.profit }}
+    </td>
+
 </tr>
+
 {% endfor %}
 
 </table>
 
-<br>
+</div>
 
-<h3>📋 Picks</h3>
+<!-- ========================= -->
+<!-- PICKS -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>📋 Historial de Picks</h2>
 
 <table>
+
 <tr>
-<th>Fecha</th>
-<th>Partido</th>
-<th>Liga</th>
-<th>Mercado</th>
-<th>Odd</th>
-<th>Value</th>
-<th>Stake</th>
-<th>Resultado</th>
-<th>Profit</th>
+    <th>Fecha</th>
+    <th>Partido</th>
+    <th>Liga</th>
+    <th>Mercado</th>
+    <th>Odd</th>
+    <th>Value</th>
+    <th>Stake</th>
+    <th>Resultado</th>
+    <th>Profit</th>
 </tr>
 
 {% for p in picks %}
+
 <tr>
-<td>{{ p.fecha }}</td>
-<td>{{ p.partido }}</td>
-<td>{{ p.liga }}</td>
-<td>{{ p.mercado }}</td>
-<td>{{ p.odd }}</td>
-<td>{{ p.value }}</td>
-<td>{{ p.stake }}</td>
-<td class="{{ p.resultado }}">{{ p.resultado }}</td>
-<td>{{ p.profit }}</td>
+
+    <td>{{ p.fecha }}</td>
+
+    <td>{{ p.partido }}</td>
+
+    <td>{{ p.liga }}</td>
+
+    <td>{{ p.mercado }}</td>
+
+    <td>{{ p.odd }}</td>
+
+    <td>{{ p.value }}</td>
+
+    <td>{{ p.stake }}</td>
+
+    <td>
+
+        {% if p.resultado == "win" %}
+            <span class="badge badge-win">
+                WIN
+            </span>
+
+        {% elif p.resultado == "loss" %}
+            <span class="badge badge-loss">
+                LOSS
+            </span>
+
+        {% else %}
+            <span class="badge badge-pend">
+                PENDIENTE
+            </span>
+        {% endif %}
+
+    </td>
+
+    <td class="{% if p.profit >= 0 %}green{% else %}red{% endif %}">
+        {{ p.profit }}
+    </td>
+
 </tr>
+
 {% endfor %}
 
 </table>
+
+</div>
+
+<!-- ========================= -->
+<!-- GRAFICA PROFIT -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>📈 Profit Acumulado</h2>
+
+<canvas id="profitChart"></canvas>
+
+</div>
+
+<!-- ========================= -->
+<!-- GRAFICA MERCADOS -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>📊 Winrate por Mercado</h2>
+
+<canvas id="mercadosChart"></canvas>
+
+</div>
+
+<script>
+
+const ctx = document
+.getElementById('profitChart');
+
+new Chart(ctx, {
+
+    type: 'line',
+
+    data: {
+
+        labels: {{ stats.grafica_labels | tojson }},
+
+        datasets: [{
+
+            label: 'Profit',
+
+            data: {{ stats.profit_acumulado | tojson }},
+
+            borderWidth: 3,
+
+            tension: 0.3
+
+        }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+                labels: {
+                    color: 'white'
+                }
+            }
+        },
+
+        scales: {
+
+            x: {
+                ticks: {
+                    color: 'white'
+                }
+            },
+
+            y: {
+                ticks: {
+                    color: 'white'
+                }
+            }
+        }
+    }
+});
+
+const ctx2 = document
+.getElementById('mercadosChart');
+
+new Chart(ctx2, {
+
+    type: 'bar',
+
+    data: {
+
+        labels: {{ stats.mercados_labels | tojson }},
+
+        datasets: [{
+
+            label: 'Winrate %',
+
+            data: {{ stats.mercados_winrate | tojson }},
+
+            borderWidth: 2
+
+        }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+                labels: {
+                    color: 'white'
+                }
+            }
+        },
+
+        scales: {
+
+            x: {
+                ticks: {
+                    color: 'white'
+                }
+            },
+
+            y: {
+                ticks: {
+                    color: 'white'
+                }
+            }
+        }
+    }
+});
+
+</script>
 
 </body>
 </html>

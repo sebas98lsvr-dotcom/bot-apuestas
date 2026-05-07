@@ -21,7 +21,11 @@ def cargar_picks():
 
     picks = []
 
-    with open(ruta, newline="", encoding="utf-8") as f:
+    with open(
+        ruta,
+        newline="",
+        encoding="utf-8"
+    ) as f:
 
         reader = csv.DictReader(f)
 
@@ -56,16 +60,17 @@ def cargar_picks():
     # =========================
     # STATS GENERALES
     # =========================
+
     total = len(picks)
 
     ganados = sum(
         1 for p in picks
-        if p.get("resultado") == "ganada"
+        if p.get("resultado") == "win"
     )
 
     perdidos = sum(
         1 for p in picks
-        if p.get("resultado") == "perdida"
+        if p.get("resultado") == "loss"
     )
 
     pendientes = sum(
@@ -96,11 +101,15 @@ def cargar_picks():
     # =========================
     # RENDIMIENTO POR MERCADO
     # =========================
+
     mercados = {}
 
     for p in picks:
 
-        mercado = p.get("mercado", "Sin mercado")
+        mercado = p.get(
+            "mercado",
+            "Sin mercado"
+        )
 
         if mercado not in mercados:
 
@@ -114,11 +123,11 @@ def cargar_picks():
 
         mercados[mercado]["profit"] += p["profit"]
 
-        if p.get("resultado") == "ganada":
+        if p.get("resultado") == "win":
 
             mercados[mercado]["wins"] += 1
 
-    # Calcular winrate por mercado
+    # Calcular winrate mercado
     for mercado in mercados:
 
         total_m = mercados[mercado]["total"]
@@ -131,18 +140,73 @@ def cargar_picks():
         ) if total_m else 0
 
     # =========================
+    # GRAFICA PROFIT ACUMULADO
+    # =========================
+
+    profit_acumulado = []
+
+    acumulado = 0
+
+    for p in reversed(picks):
+
+        acumulado += p["profit"]
+
+        profit_acumulado.append(
+            round(acumulado, 2)
+        )
+
+    # =========================
+    # LABELS GRAFICA
+    # =========================
+
+    grafica_labels = list(
+        range(
+            1,
+            len(profit_acumulado) + 1
+        )
+    )
+
+    # =========================
+    # GRAFICA MERCADOS
+    # =========================
+
+    mercados_labels = []
+    mercados_winrate = []
+
+    for m, data in mercados.items():
+
+        mercados_labels.append(m)
+
+        mercados_winrate.append(
+            data["winrate"]
+        )
+
+    # =========================
     # STATS
     # =========================
+
     stats = {
+
         "total": total,
         "ganados": ganados,
         "perdidos": perdidos,
         "pendientes": pendientes,
+
         "profit_total": profit_total,
         "stake_total": stake_total,
+
         "winrate": winrate,
         "roi": roi,
-        "mercados": mercados
+
+        "mercados": mercados,
+
+        # GRAFICA PROFIT
+        "profit_acumulado": profit_acumulado,
+        "grafica_labels": grafica_labels,
+
+        # GRAFICA MERCADOS
+        "mercados_labels": mercados_labels,
+        "mercados_winrate": mercados_winrate
     }
 
     return picks, stats
