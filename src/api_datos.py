@@ -1,41 +1,61 @@
-import requests, os
+import requests
+import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-# Carga .env desde raíz
+# Intentar cargar .env localmente
 ruta_env = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(ruta_env)
 
+# Obtener API KEY
 API_KEY = os.getenv("API_FOOTBALL_KEY")
 
-HEADERS = {"x-apisports-key": API_KEY}
+# DEBUG
+print("===================================")
+print("🔑 API KEY:", API_KEY)
+print("===================================")
+
+# Headers correctos
+HEADERS = {
+    "x-apisports-key": API_KEY
+}
+
 BASE_URL = "https://v3.football.api-sports.io"
 
 def obtener_partidos():
-    try:
-        hoy = datetime.now()
+    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+    fecha_manana = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
-        for i in range(2):  # hoy + mañana
-            fecha = (hoy + timedelta(days=i)).strftime("%Y-%m-%d")
-            print(f"📅 Buscando partidos: {fecha}")
+    partidos = []
 
-            params = {"date": fecha}
-            r = requests.get(f"{BASE_URL}/fixtures", headers=HEADERS, params=params, timeout=20)
+    for fecha in [fecha_hoy, fecha_manana]:
+        print(f"📅 Buscando partidos: {fecha}")
 
-            if r.status_code != 200:
-                print("❌ Error fixtures:", r.status_code)
+        url = f"{BASE_URL}/fixtures?date={fecha}"
+
+        try:
+            response = requests.get(url, headers=HEADERS)
+
+            print("🌐 STATUS CODE:", response.status_code)
+
+            if response.status_code == 403:
+                print("❌ ERROR 403 → API bloqueada o KEY inválida")
+                print("HEADERS:", HEADERS)
                 continue
 
-            data = r.json()
-            partidos = data.get("response", [])
+            if response.status_code != 200:
+                print(f"❌ Error fixtures: {response.status_code}")
+                continue
 
-            if partidos:
-                print(f"✅ Encontrados: {len(partidos)}")
-                return partidos
+            data = response.json()
 
-        print("⚠️ Sin partidos hoy/mañana")
-        return []
+            if "response" not in data:
+                print("❌ Respuesta inválida")
+                continue
 
-    except Exception as e:
-        print("💥 Error obtener_partidos:", e)
-        return []
+            partidos.extend(data["response"])
+
+        except Exception as e:
+            print("❌ ERROR GENERAL:", e)
+
+    return partidos
