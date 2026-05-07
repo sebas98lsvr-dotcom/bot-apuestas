@@ -1,17 +1,12 @@
-import subprocess
 import threading
-from flask import Flask
-from src.dashboard.app import app as dashboard_app
-
-app = dashboard_app
+import subprocess
+from src.dashboard.app import app
 
 # =========================
 # BOT
 # =========================
 
 def iniciar_bot():
-
-    print("🚀 Iniciando sistema...")
 
     try:
 
@@ -22,15 +17,18 @@ def iniciar_bot():
 
     except Exception as e:
 
-        print(f"❌ Error: {e}")
+        print("ERROR BOT:", e)
 
 # =========================
 # HILO
 # =========================
 
-threading.Thread(
+bot_thread = threading.Thread(
     target=iniciar_bot
-).start()
+)
+
+bot_thread.daemon = True
+bot_thread.start()
 
 # =========================
 # START
