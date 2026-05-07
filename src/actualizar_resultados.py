@@ -1,10 +1,18 @@
-import requests, csv, os
+import requests
+import csv
+import os
 from dotenv import load_dotenv
 
 # ======================
 # ENV
 # ======================
-ruta_env = os.path.join(os.path.dirname(__file__), "..", ".env")
+
+ruta_env = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    ".env"
+)
+
 load_dotenv(ruta_env)
 
 API_KEY = os.getenv("API_FOOTBALL_KEY")
@@ -20,35 +28,68 @@ BASE_URL = "https://v3.football.api-sports.io"
 # ======================
 # TELEGRAM
 # ======================
+
 def enviar_telegram(mensaje):
+
     try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        requests.get(url, params={
-            "chat_id": CHAT_ID,
-            "text": mensaje
-        })
+
+        url = (
+            f"https://api.telegram.org/bot"
+            f"{TELEGRAM_TOKEN}/sendMessage"
+        )
+
+        requests.get(
+            url,
+            params={
+                "chat_id": CHAT_ID,
+                "text": mensaje
+            },
+            timeout=20
+        )
+
     except:
         pass
 
 # ======================
 # CSV
 # ======================
-ruta = os.path.join(os.path.dirname(__file__), "..", "picks.csv")
+
+ruta = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "picks.csv"
+)
 
 if not os.path.exists(ruta):
+
     print("No hay picks")
     exit()
 
 picks = []
 
-with open(ruta, newline="", encoding="utf-8") as f:
+with open(
+    ruta,
+    newline="",
+    encoding="utf-8"
+) as f:
+
     reader = csv.DictReader(f)
+
     for row in reader:
         picks.append(row)
 
 # ======================
+# ESTADISTICAS
+# ======================
+
+wins = 0
+losses = 0
+profit_total = 0
+
+# ======================
 # PROCESO
 # ======================
+
 for p in picks:
 
     # solo pendientes
@@ -61,10 +102,19 @@ for p in picks:
         continue
 
     url = f"{BASE_URL}/fixtures"
-    params = {"id": fixture_id}
+
+    params = {
+        "id": fixture_id
+    }
 
     try:
-        r = requests.get(url, headers=HEADERS, params=params)
+
+        r = requests.get(
+            url,
+            headers=HEADERS,
+            params=params,
+            timeout=20
+        )
 
         if r.status_code != 200:
             continue
@@ -75,14 +125,16 @@ for p in picks:
             continue
 
         partido = data[0]
+
         status = partido["fixture"]["status"]["short"]
 
-        # solo partidos terminados
+        # solo terminados
         if status != "FT":
             continue
 
         goles_local = partido["goals"]["home"]
         goles_visitante = partido["goals"]["away"]
+
         total = goles_local + goles_visitante
 
         resultado = "loss"
@@ -92,34 +144,53 @@ for p in picks:
         # ======================
         # LOGICA MERCADOS
         # ======================
-        if mercado == "Over 2.5" and total > 2:
+
+        if (
+            mercado == "Over 2.5"
+            and total > 2
+        ):
+
             resultado = "win"
 
-        elif mercado == "BTTS" and goles_local > 0 and goles_visitante > 0:
-            resultado = "win"
+        elif (
+            mercado == "BTTS"
+            and goles_local > 0
+            and goles_visitante > 0
+        ):
 
-        elif "Corners" in mercado:
-            # ⚠️ no tenemos corners reales → lo dejamos como loss por ahora
-            resultado = "loss"
+            resultado = "win"
 
         odd = float(p.get("odd", 0))
         stake = float(p.get("stake", 1))
 
         # ======================
-        # PROFIT REAL
+        # PROFIT
         # ======================
+
         if resultado == "win":
+
             profit = (odd - 1) * stake
+            wins += 1
+
         else:
+
             profit = -stake
+            losses += 1
+
+        profit_total += profit
 
         p["resultado"] = resultado
         p["profit"] = round(profit, 2)
 
         # ======================
-        # TELEGRAM RESULTADO
+        # TELEGRAM INDIVIDUAL
         # ======================
-        emoji = "🟢 WIN" if resultado == "win" else "🔴 LOSS"
+
+        emoji = (
+            "🟢 WIN"
+            if resultado == "win"
+            else "🔴 LOSS"
+        )
 
         mensaje = (
             f"{emoji}\n\n"
@@ -128,20 +199,56 @@ for p in picks:
             f"👉 {p.get('mercado')}\n"
             f"💰 Odd: {odd}\n"
             f"💵 Stake: {stake}\n"
-            f"📊 Profit: {p['profit']}"
+            f"📊 Profit: {round(profit,2)}"
         )
 
         enviar_telegram(mensaje)
 
     except Exception as e:
+
         print("Error:", e)
 
 # ======================
-# GUARDAR
+# GUARDAR CSV
 # ======================
-with open(ruta, "w", newline="", encoding="utf-8") as f:
-    writer = csv.DictWriter(f, fieldnames=picks[0].keys())
+
+with open(
+    ruta,
+    "w",
+    newline="",
+    encoding="utf-8"
+) as f:
+
+    writer = csv.DictWriter(
+        f,
+        fieldnames=picks[0].keys()
+    )
+
     writer.writeheader()
     writer.writerows(picks)
+
+# ======================
+# RESUMEN FINAL
+# ======================
+
+total_picks = wins + losses
+
+if total_picks > 0:
+
+    winrate = round(
+        (wins / total_picks) * 100,
+        2
+    )
+
+    resumen = (
+        "📊 RESUMEN DEL DÍA\n\n"
+        f"🎯 Total Picks: {total_picks}\n"
+        f"🟢 Ganadas: {wins}\n"
+        f"🔴 Perdidas: {losses}\n\n"
+        f"💰 Profit Total: {round(profit_total,2)}\n"
+        f"📈 Winrate: {winrate}%"
+    )
+
+    enviar_telegram(resumen)
 
 print("✅ Resultados actualizados")
