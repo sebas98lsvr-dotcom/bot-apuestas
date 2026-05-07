@@ -1,39 +1,49 @@
 import subprocess
-import time
 import threading
 from flask import Flask
 
 app = Flask(__name__)
 
 def iniciar_bot():
-    print("🚀 Bot iniciado...")
 
-    while True:
-        try:
-            print("⚽ Generando picks...")
-            subprocess.run(["python", "src/main.py"])
+    print("🚀 Iniciando sistema...")
 
-            time.sleep(2)
+    try:
 
-            print("📤 Enviando Telegram...")
-            subprocess.run(["python", "enviar_telegram.py"])
+        # SOLO ejecuta auto_run.py
+        subprocess.run([
+            "python",
+            "src/auto_run.py"
+        ])
 
-            print("✅ Ciclo completado")
+    except Exception as e:
 
-        except Exception as e:
-            print(f"❌ Error: {e}")
+        print(f"❌ Error: {e}")
 
-        print("⏳ Esperando 1 hora...")
-        time.sleep(3600)
+# =========================
+# HILO BOT
+# =========================
 
-# Ejecuta el bot en segundo plano
-threading.Thread(target=iniciar_bot).start()
+threading.Thread(
+    target=iniciar_bot
+).start()
 
-# Ruta web para Render
+# =========================
+# WEB RENDER
+# =========================
+
 @app.route("/")
 def home():
-    return "✅ Bot de apuestas funcionando en Render"
 
-# Servidor Flask
+    return "✅ Bot funcionando"
+
+# =========================
+# START
+# =========================
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+
+    app.run(
+        host="0.0.0.0",
+        port=10000
+    )
