@@ -1,18 +1,18 @@
 fecha,fixture_id,partido,liga,mercado,odd,prob,value,stake,resultado,profit2026-05-06 14:22:50.070307,1543529,Águia de Marabá vs Paysandu,Copa Norte,Over 2.5,2.2,0.99,0.53,50.0,pendiente,0,profit
 2026-05-06 14:22:50.070363,1543117,Maghreb Fès vs Raja Casablanca,Botola Pro,Corners Over 3.5,1.75,1.0,0.43,50.0,loss,0,,,,,,,,,,,-50.0
-2026-05-06 14:22:50.070375,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,pendiente,0,,,,,,,,,,,
+2026-05-06 14:22:50.070375,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,win,0,,,,,,,,,,,47.5
 2026-05-06 14:22:50.070383,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
 2026-05-06 14:22:50.070390,1543802,Union Cocle vs UMECIT,Liga Panameña de Fútbol,Corners Over 3.5,1.6,1,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 14:22:50.070398,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,pendiente,0,,,,,,,,,,,
+2026-05-06 14:22:50.070398,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,loss,0,,,,,,,,,,,-50.0
 2026-05-06 14:22:50.070405,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,Over 2.5,2.05,0.8,0.31,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 14:22:50.070412,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435516,1543529,Águia de Marabá vs Paysandu,Copa Norte,Over 2.5,2.2,0.99,0.53,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435556,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,pendiente,0,,,,,,,,,,,
+2026-05-06 14:22:50.070412,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,win,0,,,,,,,,,,,47.5
+2026-05-06 16:09:20.435516,1543529,Águia de Marabá vs Paysandu,Copa Norte,Over 2.5,2.2,0.99,0.53,50.0,win,0,,,,,,,,,,,60.0
+2026-05-06 16:09:20.435556,1543217,ABC vs Juazeirense,Copa do Nordeste,Over 2.5,1.95,0.93,0.42,50.0,win,0,,,,,,,,,,,47.5
 2026-05-06 16:09:20.435569,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435577,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,pendiente,0,,,,,,,,,,,
+2026-05-06 16:09:20.435577,1535198,Atletico Torque vs Palestino,CONMEBOL Sudamericana,Corners Over 3.5,1.57,1.0,0.36,50.0,loss,0,,,,,,,,,,,-50.0
 2026-05-06 16:09:20.435585,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,Over 2.5,2.05,0.8,0.31,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435592,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,pendiente,0,,,,,,,,,,,
-2026-05-06 16:09:20.435599,1543217,ABC vs Juazeirense,Copa do Nordeste,BTTS,1.9,0.72,0.19,50.0,pendiente,0,,,,,,,,,,,
+2026-05-06 16:09:20.435592,1543529,Águia de Marabá vs Paysandu,Copa Norte,BTTS,1.95,0.78,0.26,50.0,win,0,,,,,,,,,,,47.5
+2026-05-06 16:09:20.435599,1543217,ABC vs Juazeirense,Copa do Nordeste,BTTS,1.9,0.72,0.19,50.0,loss,0,,,,,,,,,,,-50.0
 2026-05-06 16:09:20.435605,1543848,Deportiva Venados vs Durango,Liga Premier Serie A,BTTS,1.8,0.71,0.15,50.0,pendiente,0,,,,,,,,,,,
 2026-05-06 18:21:32.032143,1493816,Charlotte Independence vs Boise,USL League One,Over 2.5,1.65,0.98,0.38,50.0,pendiente,0,,,,,,,,,,,
 2026-05-06 18:21:32.032182,1493817,Fort Wayne vs Portland Hearts of Pine,USL League One,Over 2.5,1.85,0.66,0.12,50.0,pendiente,0,,,,,,,,,,,
