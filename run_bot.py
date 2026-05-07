@@ -1,8 +1,13 @@
 import subprocess
 import threading
 from flask import Flask
+from src.dashboard.app import app as dashboard_app
 
-app = Flask(__name__)
+app = dashboard_app
+
+# =========================
+# BOT
+# =========================
 
 def iniciar_bot():
 
@@ -10,7 +15,6 @@ def iniciar_bot():
 
     try:
 
-        # SOLO ejecuta auto_run.py
         subprocess.run([
             "python",
             "src/auto_run.py"
@@ -21,21 +25,12 @@ def iniciar_bot():
         print(f"❌ Error: {e}")
 
 # =========================
-# HILO BOT
+# HILO
 # =========================
 
 threading.Thread(
     target=iniciar_bot
 ).start()
-
-# =========================
-# WEB RENDER
-# =========================
-
-@app.route("/")
-def home():
-
-    return "✅ Bot funcionando"
 
 # =========================
 # START
