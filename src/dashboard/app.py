@@ -248,6 +248,11 @@ def home():
             for m in mercados
         ],
 
+        "mercados_winrate": [
+            m["winrate"]
+            for m in mercados
+        ],
+
         "mercados": {}
     }
 
