@@ -221,20 +221,28 @@ def main():
 
     partidos = obtener_partidos()
 
+    # ==============================
+    # LIGAS PERMITIDAS
+    # ==============================
+
     LIGAS_PERMITIDAS = [
 
-        "Championship",
-        "Bundesliga",
-        "2. Bundesliga",
-        "Allsvenskan",
-        "Eliteserien",
-        "Serie A",
-        "La Liga",
         "Premier League",
+        "La Liga",
+        "Bundesliga",
+        "Serie A",
         "Ligue 1",
         "Eredivisie",
         "Primeira Liga",
+
+        "Championship",
+        "2. Bundesliga",
+
         "Liga Profesional Argentina",
+
+        "Primera B",
+        "Copa Colombia",
+
         "CONMEBOL Libertadores",
         "CONMEBOL Sudamericana"
     ]
@@ -419,6 +427,33 @@ def main():
 
         except Exception as e:
             print("❌ Error partido:", e)
+
+    # ======================
+    # ELIMINAR DUPLICADOS
+    # ======================
+
+    picks_unicos = {}
+
+    for p in picks:
+
+        clave = (
+            p["match"]
+            + "_"
+            + p["market"]
+        )
+
+        # guardar solo mejor odd
+        if (
+            clave not in picks_unicos
+            or p["odd"] > picks_unicos[clave]["odd"]
+        ):
+
+            picks_unicos[clave] = p
+
+    # convertir nuevamente a lista
+    picks = list(
+        picks_unicos.values()
+    )
 
     # ======================
     # ORDENAR PICKS
