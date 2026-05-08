@@ -289,6 +289,16 @@ def main():
             if lamL is None:
                 continue
 
+            # ======================
+            # FILTRO OFENSIVO
+            # ======================
+
+            total_lambda = lamL + lamV
+
+            # evitar partidos cerrados
+            if total_lambda < 2.4:
+                continue
+
             prob_o = prob_over_25(lamL, lamV)
             prob_b = prob_btts(lamL, lamV)
 
@@ -316,9 +326,10 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.03
-                                    and prob_o > 0.52
-                                    and 1.60 <= odd <= 3.50
+                                    val > 0.06
+                                    and prob_o > 0.60
+                                    and total_lambda > 2.8
+                                    and 1.70 <= odd <= 2.80
                                 ):
 
                                     stake = calcular_stake(
@@ -362,9 +373,10 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.03
-                                    and prob_b > 0.52
-                                    and 1.60 <= odd <= 3.50
+                                    val > 0.05
+                                    and prob_b > 0.58
+                                    and total_lambda > 2.6
+                                    and 1.70 <= odd <= 2.60
                                 ):
 
                                     stake = calcular_stake(
@@ -416,7 +428,7 @@ def main():
         picks,
         key=lambda x: x["value"],
         reverse=True
-    )[:8]
+    )[:5]
 
     print(f"🔥 Picks finales: {len(picks)}")
 
