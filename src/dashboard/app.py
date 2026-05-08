@@ -236,6 +236,8 @@ def home():
 
         "grafica_profit": profits,
 
+        "profit_acumulado": profits,
+
         "mercados": {}
     }
 
