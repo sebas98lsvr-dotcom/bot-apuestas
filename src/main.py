@@ -39,13 +39,11 @@ RUTA_ENVIADOS = os.path.join(
     "enviados.txt"
 )
 
-# crear archivo si no existe
 if not os.path.exists(RUTA_ENVIADOS):
 
     with open(RUTA_ENVIADOS, "w") as f:
         pass
 
-# cargar enviados
 with open(RUTA_ENVIADOS, "r") as f:
 
     ENVIADOS = set(
@@ -78,6 +76,7 @@ def enviar_telegram(mensaje):
         print("✅ Mensaje enviado")
 
     except Exception as e:
+
         print("❌ Error Telegram:", e)
 
 # ==============================
@@ -118,13 +117,13 @@ def guardar(picks):
             fieldnames=campos
         )
 
-        # escribir header solo si vacío
         if f.tell() == 0:
             writer.writeheader()
 
         for p in picks:
 
             writer.writerow({
+
                 "fecha": datetime.now(),
                 "fixture_id": p["fixture_id"],
                 "partido": p["match"],
@@ -222,7 +221,7 @@ def main():
     partidos = obtener_partidos()
 
     # ==============================
-    # LIGAS PERMITIDAS
+    # LIGAS
     # ==============================
 
     LIGAS_PERMITIDAS = [
@@ -260,10 +259,6 @@ def main():
                 p["fixture"]["id"]
             )
 
-            # ======================
-            # NO REPETIR PICKS
-            # ======================
-
             if fixture_id in ENVIADOS:
                 continue
 
@@ -297,26 +292,32 @@ def main():
             if lamL is None:
                 continue
 
-            # ======================
-            # FILTRO OFENSIVO
-            # ======================
-
             total_lambda = lamL + lamV
 
-            # evitar partidos cerrados
+            # ==============================
+            # FILTRO OFENSIVO
+            # ==============================
+
             if total_lambda < 2.4:
                 continue
 
-            prob_o = prob_over_25(lamL, lamV)
-            prob_b = prob_btts(lamL, lamV)
+            prob_o = prob_over_25(
+                lamL,
+                lamV
+            )
+
+            prob_b = prob_btts(
+                lamL,
+                lamV
+            )
 
             picks_partido = []
 
             for b in bets:
 
-                # ======================
+                # ==============================
                 # OVER 2.5
-                # ======================
+                # ==============================
 
                 if b["name"] == "Goals Over/Under":
 
@@ -347,6 +348,7 @@ def main():
                                     )
 
                                     picks_partido.append({
+
                                         "fixture_id": fixture_id,
                                         "date": fecha_partido,
                                         "match": f"{local} vs {visitante}",
@@ -361,9 +363,9 @@ def main():
                             except:
                                 continue
 
-                # ======================
+                # ==============================
                 # BTTS
-                # ======================
+                # ==============================
 
                 if b["name"] == "Both Teams Score":
 
@@ -394,6 +396,7 @@ def main():
                                     )
 
                                     picks_partido.append({
+
                                         "fixture_id": fixture_id,
                                         "date": fecha_partido,
                                         "match": f"{local} vs {visitante}",
@@ -408,13 +411,15 @@ def main():
                             except:
                                 continue
 
-            # ======================
-            # GUARDAR ENVIADOS
-            # ======================
+            # ==============================
+            # AGREGAR PICKS
+            # ==============================
 
             if picks_partido:
 
-                picks.extend(picks_partido)
+                picks.extend(
+                    picks_partido
+                )
 
                 with open(
                     RUTA_ENVIADOS,
@@ -426,50 +431,60 @@ def main():
                     )
 
         except Exception as e:
-            print("❌ Error partido:", e)
 
-    # ======================
+            print(
+                "❌ Error partido:",
+                e
+            )
+
+    # ==============================
     # ELIMINAR DUPLICADOS
-    # ======================
+    # ==============================
 
     picks_unicos = {}
 
     for p in picks:
 
+        # NO repetir mismo partido + mercado
         clave = (
             p["match"]
             + "_"
             + p["market"]
         )
 
-        # guardar solo mejor odd
+        # guardar mejor value
         if (
             clave not in picks_unicos
-            or p["odd"] > picks_unicos[clave]["odd"]
+            or p["value"] > picks_unicos[clave]["value"]
         ):
 
             picks_unicos[clave] = p
 
-    # convertir nuevamente a lista
     picks = list(
         picks_unicos.values()
     )
 
-    # ======================
+    # ==============================
     # ORDENAR PICKS
-    # ======================
+    # ==============================
 
     picks = sorted(
+
         picks,
+
         key=lambda x: x["value"],
+
         reverse=True
+
     )[:5]
 
-    print(f"🔥 Picks finales: {len(picks)}")
+    print(
+        f"🔥 Picks finales: {len(picks)}"
+    )
 
-    # ======================
+    # ==============================
     # TELEGRAM
-    # ======================
+    # ==============================
 
     mensaje = "🔥 PICKS DEL BOT 🔥\n\n"
 
@@ -512,22 +527,30 @@ def main():
             f"💵 Stake: {mejor['stake']}\n\n"
         )
 
-    # ======================
+    # ==============================
     # ENVIAR
-    # ======================
+    # ==============================
 
     if picks:
 
-        enviar_telegram(mensaje)
+        enviar_telegram(
+            mensaje
+        )
 
-        guardar(picks)
+        guardar(
+            picks
+        )
 
     else:
-        print("⚠️ No hubo picks nuevos")
+
+        print(
+            "⚠️ No hubo picks nuevos"
+        )
 
 # ==============================
 # START
 # ==============================
 
 if __name__ == "__main__":
+
     main()
