@@ -23,7 +23,7 @@ while True:
     hoy = ahora.date()
 
     if (
-        ahora.hour == 8
+        ahora.hour == 12
         and ultimo_dia_picks != hoy
     ):
 
