@@ -238,6 +238,16 @@ def home():
 
         "profit_acumulado": profits,
 
+        "mercados_labels": [
+            m["mercado"]
+            for m in mercados
+        ],
+
+        "mercados_profit": [
+            m["profit"]
+            for m in mercados
+        ],
+
         "mercados": {}
     }
 
