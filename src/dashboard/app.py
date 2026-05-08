@@ -212,7 +212,7 @@ def home():
         "pendientes": pendientes,
         "winrate": winrate,
         "roi": roi,
-        "profit": profit,
+        "profit_total": profit,
         "stake_total": stake_total
     }
 
