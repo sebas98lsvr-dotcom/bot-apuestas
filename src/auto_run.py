@@ -23,7 +23,7 @@ while True:
     hoy = ahora.date()
 
     if (
-        ahora.hour == 8
+        ahora.hour == 11
         and ultimo_dia_picks != hoy
     ):
 
@@ -40,12 +40,13 @@ while True:
     # ACTUALIZAR RESULTADOS
     # =========================
 
-    print("🔄 Actualizando resultados...")
+    # TEMPORALMENTE DESACTIVADO
+    # porque el archivo no existe
 
-    subprocess.run([
-        "python",
-        "actualizar_resultados.py"
-    ])
+    # subprocess.run([
+    #     "python",
+    #     "actualizar_resultados.py"
+    # ])
 
     # =========================
     # ESPERA
