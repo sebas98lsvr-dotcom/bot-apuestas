@@ -8,12 +8,20 @@ app = Flask(__name__)
 # RUTA CSV
 # =========================
 
+BASE_DIR = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        ".."
+    )
+)
+
 ruta_csv = os.path.join(
-    os.path.dirname(__file__),
-    "..",
-    "..",
+    BASE_DIR,
     "picks.csv"
 )
+
+print("📂 CSV:", ruta_csv)
 
 # =========================
 # HOME
@@ -33,7 +41,7 @@ def home():
         df = pd.DataFrame()
 
     # =========================
-    # ESTADISTICAS BASICAS
+    # ESTADISTICAS
     # =========================
 
     total = len(df)
@@ -107,12 +115,11 @@ def home():
 
     if not df.empty:
 
-        historial = (
-            df.sort_values(
-                by="fecha",
-                ascending=False
-            )
-            .to_dict(orient="records")
+        historial = df.sort_values(
+            by="fecha",
+            ascending=False
+        ).fillna("").to_dict(
+            orient="records"
         )
 
     # =========================
@@ -216,7 +223,7 @@ def home():
             )
 
     # =========================
-    # STATS TEMPLATE
+    # STATS
     # =========================
 
     stats = {
