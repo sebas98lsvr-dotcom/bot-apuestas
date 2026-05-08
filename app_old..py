@@ -1,3 +1,5 @@
+import threading
+import subprocess
 from flask import Flask, render_template_string
 import pandas as pd
 
@@ -6,7 +8,11 @@ app = Flask(__name__)
 HTML = """
 <!DOCTYPE html>
 <html>
-<body style="background:black;color:white;text-align:center;">
+<head>
+    <title>Bot Apuestas</title>
+</head>
+
+<body style="background:black;color:white;text-align:center;font-family:Arial;">
 
 <h1>🔥 SELECCIONES DEL BOT 🔥</h1>
 
@@ -14,8 +20,9 @@ HTML = """
 <p>No hay picks hoy</p>
 {% else %}
 
-<table border="1" style="margin:auto;">
-<tr>
+<table border="1" style="margin:auto;border-collapse:collapse;width:80%;">
+
+<tr style="background:#222;">
 <th>Partido</th>
 <th>Mercado</th>
 <th>Odds</th>
@@ -45,13 +52,26 @@ HTML = """
 
 @app.route("/")
 def home():
+
     try:
         df = pd.read_csv("picks.csv")
         data = df.to_dict(orient="records")
+
     except:
         data = []
 
     return render_template_string(HTML, data=data)
 
+
+# 🔥 INICIAR BOT AUTOMÁTICO
+def iniciar_bot():
+    subprocess.Popen(["python", "src/auto_run.py"])
+
+
+# 🔥 EJECUTAR BOT EN SEGUNDO PLANO
+threading.Thread(target=iniciar_bot).start()
+
+
+# 🔥 INICIAR FLASK
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=10000)
