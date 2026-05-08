@@ -1,13 +1,30 @@
-import threading
 import subprocess
+import threading
+import time
 
 # 🔥 iniciar bot automatico
 def iniciar_bot():
-    subprocess.Popen(["python", "src/auto_run.py"])
 
-threading.Thread(target=iniciar_bot).start()
+    while True:
 
-# 🔥 iniciar dashboard flask
+        print("🔥 Ejecutando auto_run.py...")
+
+        proceso = subprocess.Popen(
+            ["python", "src/auto_run.py"]
+        )
+
+        proceso.wait()
+
+        print("⚠️ auto_run terminado. Reiniciando en 10 segundos...")
+
+        time.sleep(10)
+
+
+# 🔥 arrancar hilo del bot
+threading.Thread(target=iniciar_bot, daemon=True).start()
+
+
+# 🔥 iniciar dashboard
 from src.dashboard.app import app
 
 if __name__ == "__main__":
