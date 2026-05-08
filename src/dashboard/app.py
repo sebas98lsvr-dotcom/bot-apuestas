@@ -26,39 +26,48 @@ def home():
 
         df = pd.read_csv(ruta_csv)
 
-    except:
+    except Exception as e:
+
+        print("Error CSV:", e)
 
         df = pd.DataFrame()
 
     # =========================
-    # ESTADISTICAS
+    # ESTADISTICAS BASICAS
     # =========================
 
     total = len(df)
 
-    wins = len(
-        df[df["resultado"] == "win"]
-    ) if not df.empty else 0
+    wins = 0
+    losses = 0
+    pendientes = 0
 
-    losses = len(
-        df[df["resultado"] == "loss"]
-    ) if not df.empty else 0
+    profit = 0
+    stake_total = 0
 
-    pendientes = len(
-        df[df["resultado"] == "pendiente"]
-    ) if not df.empty else 0
+    if not df.empty:
 
-    profit = (
-        round(df["profit"].sum(), 2)
-        if not df.empty
-        else 0
-    )
+        wins = len(
+            df[df["resultado"] == "win"]
+        )
 
-    stake_total = (
-        round(df["stake"].sum(), 2)
-        if not df.empty
-        else 0
-    )
+        losses = len(
+            df[df["resultado"] == "loss"]
+        )
+
+        pendientes = len(
+            df[df["resultado"] == "pendiente"]
+        )
+
+        profit = round(
+            df["profit"].sum(),
+            2
+        )
+
+        stake_total = round(
+            df["stake"].sum(),
+            2
+        )
 
     # =========================
     # WINRATE
@@ -72,6 +81,7 @@ def home():
         )
 
     else:
+
         winrate = 0
 
     # =========================
@@ -86,6 +96,7 @@ def home():
         )
 
     else:
+
         roi = 0
 
     # =========================
@@ -136,6 +147,7 @@ def home():
                 )
 
             else:
+
                 wr = 0
 
             profit_m = round(
@@ -181,9 +193,11 @@ def home():
         for _, row in df.iterrows():
 
             if row["resultado"] == "win":
+
                 acumulado_w += 1
 
             if row["resultado"] != "pendiente":
+
                 acumulado_total += 1
 
             if acumulado_total > 0:
@@ -194,6 +208,7 @@ def home():
                 ) * 100
 
             else:
+
                 wr = 0
 
             winrates.append(
@@ -201,7 +216,7 @@ def home():
             )
 
     # =========================
-    # STATS
+    # STATS TEMPLATE
     # =========================
 
     stats = {
@@ -214,6 +229,13 @@ def home():
         "roi": roi,
         "profit_total": profit,
         "stake_total": stake_total,
+
+        "grafica_labels": list(
+            range(len(profits))
+        ),
+
+        "grafica_profit": profits,
+
         "mercados": {}
     }
 
@@ -225,6 +247,10 @@ def home():
             "winrate": m["winrate"],
             "profit": m["profit"]
         }
+
+    # =========================
+    # RENDER
+    # =========================
 
     return render_template(
 
