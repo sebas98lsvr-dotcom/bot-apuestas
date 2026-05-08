@@ -6,7 +6,7 @@ from datetime import datetime
 # CONTROL EJECUCION
 # =========================
 
-ultimo_dia_picks = None
+ultimas_horas = []
 
 while True:
 
@@ -16,37 +16,59 @@ while True:
 
     ahora = datetime.now()
 
-    # =========================
-    # PICKS SOLO 1 VEZ AL DIA
-    # =========================
-
     hoy = ahora.date()
+    hora_actual = ahora.hour
+
+    # =========================
+    # HORARIOS DE PICKS
+    # =========================
+    # 5 AM
+    # 10 AM
+    # 5 PM
+    # 8 PM
+
+    horarios = [5, 10, 17, 20]
+
+    clave = f"{hoy}_{hora_actual}"
 
     if (
-        ahora.hour == 11
-        and ultimo_dia_picks != hoy
+        hora_actual in horarios
+        and clave not in ultimas_horas
     ):
 
         print("📊 Generando picks...")
 
         subprocess.run([
             "python",
-            "main.py"
+            "src/main.py"
         ])
 
-        ultimo_dia_picks = hoy
+        print("📨 Enviando Telegram...")
+
+        subprocess.run([
+            "python",
+            "enviar_telegram.py"
+        ])
+
+        ultimas_horas.append(clave)
+
+        print("✅ Picks enviados")
 
     # =========================
     # ACTUALIZAR RESULTADOS
     # =========================
 
-    # TEMPORALMENTE DESACTIVADO
-    # porque el archivo no existe
+    try:
 
-    # subprocess.run([
-    #     "python",
-    #     "actualizar_resultados.py"
-    # ])
+        print("🔄 Actualizando resultados...")
+
+        subprocess.run([
+            "python",
+            "src/actualizar_resultados.py"
+        ])
+
+    except:
+        print("⚠️ No se pudieron actualizar resultados")
 
     # =========================
     # ESPERA
