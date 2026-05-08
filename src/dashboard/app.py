@@ -31,96 +31,94 @@ def home():
         df = pd.DataFrame()
 
     # =========================
-    # SI NO HAY PICKS
+    # ESTADISTICAS
     # =========================
 
-    if df.empty:
+    total = len(df)
 
-        stats = {
-            "total": 0,
-            "wins": 0,
-            "losses": 0,
-            "pendientes": 0,
-            "winrate": 0,
-            "roi": 0,
-            "profit": 0,
-            "stake_total": 0
-        }
+    wins = len(
+        df[df["resultado"] == "win"]
+    ) if not df.empty else 0
 
-        mercados = []
+    losses = len(
+        df[df["resultado"] == "loss"]
+    ) if not df.empty else 0
 
-        historial = []
+    pendientes = len(
+        df[df["resultado"] == "pendiente"]
+    ) if not df.empty else 0
 
-        profits = []
+    profit = (
+        round(df["profit"].sum(), 2)
+        if not df.empty
+        else 0
+    )
 
-        winrates = []
+    stake_total = (
+        round(df["stake"].sum(), 2)
+        if not df.empty
+        else 0
+    )
+
+    # =========================
+    # WINRATE
+    # =========================
+
+    if (wins + losses) > 0:
+
+        winrate = round(
+            (wins / (wins + losses)) * 100,
+            2
+        )
 
     else:
+        winrate = 0
 
-        # =========================
-        # ESTADISTICAS
-        # =========================
+    # =========================
+    # ROI
+    # =========================
 
-        total = len(df)
+    if stake_total > 0:
 
-        wins = len(
-            df[df["resultado"] == "win"]
+        roi = round(
+            (profit / stake_total) * 100,
+            2
         )
 
-        losses = len(
-            df[df["resultado"] == "loss"]
-        )
+    else:
+        roi = 0
 
-        pendientes = len(
-            df[df["resultado"] == "pendiente"]
-        )
+    # =========================
+    # HISTORIAL
+    # =========================
 
-        stake_total = df["stake"].sum()
+    historial = []
 
-        profit_total = df["profit"].sum()
+    if not df.empty:
 
-        if wins + losses > 0:
-
-            winrate = round(
-                (wins / (wins + losses)) * 100,
-                2
+        historial = (
+            df.sort_values(
+                by="fecha",
+                ascending=False
             )
+            .to_dict(orient="records")
+        )
 
-        else:
-            winrate = 0
+    # =========================
+    # MERCADOS
+    # =========================
 
-        if stake_total > 0:
+    mercados = []
 
-            roi = round(
-                (profit_total / stake_total) * 100,
-                2
-            )
-
-        else:
-            roi = 0
-
-        stats = {
-            "total": total,
-            "wins": wins,
-            "losses": losses,
-            "pendientes": pendientes,
-            "winrate": winrate,
-            "roi": roi,
-            "profit": round(profit_total, 2),
-            "stake_total": round(stake_total, 2)
-        }
-
-        # =========================
-        # MERCADOS
-        # =========================
-
-        mercados = []
+    if not df.empty:
 
         for mercado in df["mercado"].unique():
 
             d = df[
                 df["mercado"] == mercado
             ]
+
+            total_m = len(d)
 
             w = len(
                 d[d["resultado"] == "win"]
@@ -130,42 +128,36 @@ def home():
                 d[d["resultado"] == "loss"]
             )
 
-            total_ml = w + l
-
-            if total_ml > 0:
+            if (w + l) > 0:
 
                 wr = round(
-                    (w / total_ml) * 100,
+                    (w / (w + l)) * 100,
                     2
                 )
 
             else:
                 wr = 0
 
-            profit = round(
+            profit_m = round(
                 d["profit"].sum(),
                 2
             )
 
             mercados.append({
+
                 "mercado": mercado,
-                "total": len(d),
+                "total": total_m,
                 "winrate": wr,
-                "profit": profit
+                "profit": profit_m
             })
 
-        # =========================
-        # HISTORIAL
-        # =========================
+    # =========================
+    # GRAFICA PROFIT
+    # =========================
 
-        historial = df.sort_values(
-            by="fecha",
-            ascending=False
-        ).to_dict(orient="records")
+    profits = []
 
-        # =========================
-        # GRAFICA PROFIT
-        # =========================
+    if not df.empty:
 
         df["profit_acumulado"] = (
             df["profit"].cumsum()
@@ -175,11 +167,13 @@ def home():
             "profit_acumulado"
         ].tolist()
 
-        # =========================
-        # GRAFICA WINRATE
-        # =========================
+    # =========================
+    # GRAFICA WINRATE
+    # =========================
 
-        winrates = []
+    winrates = []
+
+    if not df.empty:
 
         acumulado_w = 0
         acumulado_total = 0
@@ -206,11 +200,29 @@ def home():
                 round(wr, 2)
             )
 
+    # =========================
+    # STATS
+    # =========================
+
+    stats = {
+
+        "total": total,
+        "wins": wins,
+        "losses": losses,
+        "pendientes": pendientes,
+        "winrate": winrate,
+        "roi": roi,
+        "profit": profit,
+        "stake_total": stake_total
+    }
+
     return render_template(
+
         "index.html",
+
         stats=stats,
-        mercados=mercados,
         historial=historial,
+        mercados=mercados,
         profits=profits,
         winrates=winrates
     )
@@ -222,6 +234,7 @@ def home():
 if __name__ == "__main__":
 
     app.run(
+
         host="0.0.0.0",
         port=10000,
         debug=False
