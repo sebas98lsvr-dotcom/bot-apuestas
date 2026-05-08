@@ -213,8 +213,18 @@ def home():
         "winrate": winrate,
         "roi": roi,
         "profit_total": profit,
-        "stake_total": stake_total
+        "stake_total": stake_total,
+        "mercados": {}
     }
+
+    for m in mercados:
+
+        stats["mercados"][m["mercado"]] = {
+
+            "total": m["total"],
+            "winrate": m["winrate"],
+            "profit": m["profit"]
+        }
 
     return render_template(
 
