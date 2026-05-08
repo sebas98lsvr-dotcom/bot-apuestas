@@ -62,7 +62,7 @@ ruta = os.path.join(
 
 if not os.path.exists(ruta):
 
-    print("No hay picks")
+    print("⚠️ No existe picks.csv")
     exit()
 
 picks = []
@@ -77,6 +77,15 @@ with open(
 
     for row in reader:
         picks.append(row)
+
+# ======================
+# VALIDAR PICKS
+# ======================
+
+if len(picks) == 0:
+
+    print("⚠️ No hay picks para actualizar")
+    exit()
 
 # ======================
 # ESTADISTICAS
