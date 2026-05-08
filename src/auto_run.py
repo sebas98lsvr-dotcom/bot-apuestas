@@ -40,12 +40,13 @@ while True:
     # ACTUALIZAR RESULTADOS
     # =========================
 
-    print("🔄 Actualizando resultados...")
+    # TEMPORALMENTE DESACTIVADO
+    # porque el archivo no existe
 
-    subprocess.run([
-        "python",
-        "actualizar_resultados.py"
-    ])
+    # subprocess.run([
+    #     "python",
+    #     "actualizar_resultados.py"
+    # ])
 
     # =========================
     # ESPERA
