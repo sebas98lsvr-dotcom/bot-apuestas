@@ -3,6 +3,10 @@ import subprocess
 import sys
 from datetime import datetime
 
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+except:
+    pass
 # =========================
 # CONTROL EJECUCION
 # =========================

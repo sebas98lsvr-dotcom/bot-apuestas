@@ -13,7 +13,7 @@ def iniciar_bot():
             print("🔥 Ejecutando auto_run.py...")
 
             proceso = subprocess.Popen(
-                [sys.executable, "src/auto_run.py"]
+            [sys.executable, "-u", "src/auto_run.py"]
             )
 
             proceso.wait()
