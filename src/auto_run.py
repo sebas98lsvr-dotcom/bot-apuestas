@@ -1,5 +1,6 @@
 import time
 import subprocess
+import sys
 from datetime import datetime
 
 # =========================
@@ -8,67 +9,78 @@ from datetime import datetime
 
 ultimas_horas = []
 
+print("🚀 AUTO_RUN INICIADO")
+
 while True:
-
-    print("\n============================")
-    print("⏰ BOT ACTIVO:", datetime.now())
-    print("============================")
-
-    ahora = datetime.now()
-
-    hoy = ahora.date()
-    hora_actual = ahora.hour
-
-    # =========================
-    # HORARIOS DE PICKS
-    # =========================
-    # 5 AM
-    # 10 AM
-    # 5 PM
-    # 8 PM
-
-    horarios = [5, 10, 17, 20]
-
-    clave = f"{hoy}_{hora_actual}"
-
-    if (
-        hora_actual in horarios
-        and clave not in ultimas_horas
-    ):
-
-        print("📊 Generando picks...")
-
-        subprocess.run([
-            "python",
-            "src/main.py"
-        ])
-
-        print("📨 Enviando Telegram...")
-
-        subprocess.run([
-            "python",
-            "enviar_telegram.py"
-        ])
-
-        ultimas_horas.append(clave)
-
-        print("✅ Picks enviados")
-
-    # =========================
-    # ACTUALIZAR RESULTADOS
-    # =========================
 
     try:
 
-        print("🔄 Actualizando resultados...")
+        print("\n============================")
+        print("⏰ BOT ACTIVO:", datetime.now())
+        print("============================")
 
-        subprocess.run([
-            "python",
-            "src/actualizar_resultados.py"
-        ])
+        ahora = datetime.now()
 
-    except:
-        print("⚠️ No se pudieron actualizar resultados")
+        hoy = ahora.date()
+        hora_actual = ahora.hour
+
+        # =========================
+        # HORARIOS DE PICKS
+        # =========================
+
+        horarios = [5, 10, 17, 20]
+
+        clave = f"{hoy}_{hora_actual}"
+
+        if (
+            hora_actual in horarios
+            and clave not in ultimas_horas
+        ):
+
+            print("📊 Generando picks...")
+
+            subprocess.run([
+                sys.executable,
+                "src/main.py"
+            ])
+
+            print("📨 Enviando Telegram...")
+
+            subprocess.run([
+                sys.executable,
+                "enviar_telegram.py"
+            ])
+
+            ultimas_horas.append(clave)
+
+            print("✅ Picks enviados")
+
+        else:
+
+            print("⌛ No es hora de enviar picks todavía")
+
+        # =========================
+        # ACTUALIZAR RESULTADOS
+        # =========================
+
+        try:
+
+            print("🔄 Actualizando resultados...")
+
+            subprocess.run([
+                sys.executable,
+                "src/actualizar_resultados.py"
+            ])
+
+            print("✅ Resultados actualizados")
+
+        except Exception as e:
+
+            print(f"⚠️ Error actualizando resultados: {e}")
+
+    except Exception as e:
+
+        print(f"❌ ERROR GENERAL: {e}")
 
     # =========================
     # ESPERA
