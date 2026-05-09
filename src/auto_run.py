@@ -2,11 +2,13 @@ import time
 import subprocess
 import sys
 from datetime import datetime
+import pytz
 
 try:
     sys.stdout.reconfigure(line_buffering=True)
 except:
     pass
+
 # =========================
 # CONTROL EJECUCION
 # =========================
@@ -19,11 +21,12 @@ while True:
 
     try:
 
-        print("\n============================")
-        print("⏰ BOT ACTIVO:", datetime.now())
-        print("============================")
+        zona_colombia = pytz.timezone("America/Bogota")
+        ahora = datetime.now(zona_colombia)
 
-        ahora = datetime.now()
+        print("\n============================")
+        print("🤖 BOT ACTIVO:", ahora)
+        print("============================")
 
         hoy = ahora.date()
         hora_actual = ahora.hour
@@ -32,7 +35,7 @@ while True:
         # HORARIOS DE PICKS
         # =========================
 
-        horarios = [5, 10, 17, 20]
+        horarios = [5, 10, 17, 22]
 
         clave = f"{hoy}_{hora_actual}"
 
