@@ -13,7 +13,7 @@ except:
 
 ultimas_horas = []
 
-print("🚀 AUTO_RUN INICIADO")
+print("🚀 AUTO_RUN INICIADOOOOOO")
 
 while True:
 
