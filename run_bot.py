@@ -1,21 +1,28 @@
 import subprocess
 import threading
 import time
+import sys
 
 # 🔥 iniciar bot automatico
 def iniciar_bot():
 
     while True:
 
-        print("🔥 Ejecutando auto_run.py...")
+        try:
 
-        proceso = subprocess.Popen(
-            ["python", "src/auto_run.py"]
-        )
+            print("🔥 Ejecutando auto_run.py...")
 
-        proceso.wait()
+            proceso = subprocess.Popen(
+                [sys.executable, "src/auto_run.py"]
+            )
 
-        print("⚠️ auto_run terminado. Reiniciando en 10 segundos...")
+            proceso.wait()
+
+            print("⚠️ auto_run terminado. Reiniciando en 10 segundos...")
+
+        except Exception as e:
+
+            print(f"❌ Error ejecutando auto_run.py: {e}")
 
         time.sleep(10)
 
@@ -28,4 +35,10 @@ threading.Thread(target=iniciar_bot, daemon=True).start()
 from src.dashboard.app import app
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+
+    print("🚀 Iniciando dashboard Flask...")
+
+    app.run(
+        host="0.0.0.0",
+        port=10000
+    )
