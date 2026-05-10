@@ -140,6 +140,21 @@ def guardar(picks):
             })
 
 # ==============================
+# PROBABILIDAD OVER 1.5
+# ==============================
+
+def prob_over_15(lam_local, lam_visit):
+
+    total = lam_local + lam_visit
+
+    from math import exp
+
+    p0 = exp(-total)
+    p1 = total * exp(-total)
+
+    return 1 - (p0 + p1)
+
+# ==============================
 # CALCULAR LAMBDAS
 # ==============================
 
@@ -222,25 +237,42 @@ def main():
 
     partidos = obtener_partidos()
 
+    # ==============================
+    # LIGAS PERMITIDAS
+    # ==============================
+
     LIGAS_PERMITIDAS = [
 
+        # INGLATERRA
         "Premier League",
-        "La Liga",
+
+        # ALEMANIA
         "Bundesliga",
+
+        # ESPAÑA
+        "La Liga",
+
+        # ITALIA
         "Serie A",
-        "Ligue 1",
-        "Eredivisie",
-        "Primeira Liga",
+        "Coppa Italia",
 
-        "Championship",
-        "2. Bundesliga",
-
-        "Liga Profesional Argentina",
-
+        # COLOMBIA
+        "Primera A",
+        "Primera B",
         "Copa Colombia",
 
-        "CONMEBOL Libertadores",
-        "CONMEBOL Sudamericana"
+        # ARGENTINA
+        "Liga Profesional Argentina",
+        "Copa Argentina",
+
+        # BRASIL
+        "Serie A Brasil",
+        "Brasileirao",
+        "Serie A",
+
+        # EUROPA
+        "UEFA Champions League",
+        "UEFA Europa League"
     ]
 
     picks = []
@@ -267,14 +299,26 @@ def main():
             local = p["teams"]["home"]["name"]
             visitante = p["teams"]["away"]["name"]
 
+            print(f"\n⚽ Analizando: {local} vs {visitante}")
+
             league_name = p["league"]["name"]
 
+            print(f"🏆 Liga detectada: {league_name}")
+
             if league_name not in LIGAS_PERMITIDAS:
+
+                print(f"❌ Liga bloqueada: {league_name}")
+
                 continue
+
+            print(f"✅ Liga permitida: {league_name}")
 
             odds = obtener_odds(fixture_id)
 
             if not odds:
+
+                print("❌ Sin odds")
+
                 continue
 
             bets = []
@@ -284,14 +328,19 @@ def main():
                 if "bets" in book:
                     bets.extend(book["bets"])
 
+            print(f"💰 Odds válidas: {len(bets)}")
+
             lamL, lamV = calcular_lambdas(p)
 
             if lamL is None:
+
+                print("❌ Sin lambdas")
+
                 continue
 
             total_lambda = lamL + lamV
 
-            if total_lambda < 2.4:
+            if total_lambda < 2.2:
                 continue
 
             prob_o = prob_over_25(
@@ -304,17 +353,71 @@ def main():
                 lamV
             )
 
+            prob_o15 = prob_over_15(
+                lamL,
+                lamV
+            )
+
+            print(f"📊 Lambda total: {round(total_lambda,2)}")
+            print(f"📈 Prob Over2.5: {round(prob_o,2)}")
+            print(f"📈 Prob BTTS: {round(prob_b,2)}")
+            print(f"📈 Prob Over1.5: {round(prob_o15,2)}")
+
             picks_partido = []
 
             for b in bets:
 
                 # ==============================
-                # OVER 2.5
+                # OVERS
                 # ==============================
 
                 if b["name"] == "Goals Over/Under":
 
                     for v in b["values"]:
+
+                        # OVER 1.5
+
+                        if v["value"] == "Over 1.5":
+
+                            try:
+
+                                odd = float(v["odd"])
+
+                                val = calcular_value(
+                                    prob_o15,
+                                    odd
+                                )
+
+                                if (
+                                    val > 0.03
+                                    and prob_o15 > 0.72
+                                    and total_lambda > 2.2
+                                    and 1.25 <= odd <= 1.75
+                                ):
+
+                                    stake = calcular_stake(
+                                        BANK,
+                                        val,
+                                        odd
+                                    )
+
+                                    picks_partido.append({
+
+                                        "fixture_id": fixture_id,
+                                        "date": fecha_partido,
+                                        "match": f"{local} vs {visitante}",
+                                        "league": league_name,
+                                        "market": "Over 1.5",
+                                        "odd": odd,
+                                        "prob": prob_o15,
+                                        "value": val,
+                                        "stake": stake
+                                    })
+
+                            except:
+                                continue
+
+                        # OVER 2.5
 
                         if v["value"] == "Over 2.5":
 
@@ -328,10 +431,10 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.06
-                                    and prob_o > 0.60
-                                    and total_lambda > 2.8
-                                    and 1.70 <= odd <= 2.80
+                                    val > 0.04
+                                    and prob_o > 0.57
+                                    and total_lambda > 2.6
+                                    and 1.65 <= odd <= 2.80
                                 ):
 
                                     stake = calcular_stake(
@@ -376,10 +479,10 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.05
-                                    and prob_b > 0.58
-                                    and total_lambda > 2.6
-                                    and 1.70 <= odd <= 2.60
+                                    val > 0.04
+                                    and prob_b > 0.55
+                                    and total_lambda > 2.5
+                                    and 1.65 <= odd <= 2.60
                                 ):
 
                                     stake = calcular_stake(
@@ -468,11 +571,9 @@ def main():
             + p["market"]
         )
 
-        # evitar picks ya guardados
         if clave in existentes:
             continue
 
-        # evitar duplicados del mismo run
         if (
             clave not in picks_unicos
             or p["value"] > picks_unicos[clave]["value"]
@@ -496,7 +597,7 @@ def main():
 
         reverse=True
 
-    )[:5]
+    )[:8]
 
     print(
         f"🔥 Picks finales: {len(picks)}"
@@ -553,12 +654,10 @@ def main():
 
     if picks:
 
-        # guardar primero
         guardar(
             picks
         )
 
-        # luego enviar telegram
         enviar_telegram(
             mensaje
         )
