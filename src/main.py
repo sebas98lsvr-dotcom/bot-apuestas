@@ -340,7 +340,7 @@ def main():
 
             total_lambda = lamL + lamV
 
-            if total_lambda < 2.2:
+            if total_lambda < 2.1:
                 continue
 
             prob_o = prob_over_25(
@@ -389,11 +389,13 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.03
-                                    and prob_o15 > 0.72
-                                    and total_lambda > 2.2
-                                    and 1.25 <= odd <= 1.75
+                                    val > 0.02
+                                    and prob_o15 > 0.70
+                                    and total_lambda > 2.1
+                                    and 1.20 <= odd <= 1.80
                                 ):
+
+                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
 
                                     stake = calcular_stake(
                                         BANK,
@@ -431,11 +433,13 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.04
-                                    and prob_o > 0.57
-                                    and total_lambda > 2.6
-                                    and 1.65 <= odd <= 2.80
+                                    val > 0.03
+                                    and prob_o > 0.54
+                                    and total_lambda > 2.45
+                                    and 1.60 <= odd <= 2.90
                                 ):
+
+                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
 
                                     stake = calcular_stake(
                                         BANK,
@@ -479,11 +483,13 @@ def main():
                                 )
 
                                 if (
-                                    val > 0.04
-                                    and prob_b > 0.55
-                                    and total_lambda > 2.5
-                                    and 1.65 <= odd <= 2.60
+                                    val > 0.03
+                                    and prob_b > 0.53
+                                    and total_lambda > 2.35
+                                    and 1.55 <= odd <= 2.70
                                 ):
+
+                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
 
                                     stake = calcular_stake(
                                         BANK,
@@ -657,6 +663,8 @@ def main():
         guardar(
             picks
         )
+
+        print(f"💾 Picks guardadas: {len(picks)}")
 
         enviar_telegram(
             mensaje
