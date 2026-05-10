@@ -163,12 +163,14 @@ for p in picks:
 
         total = goles_local + goles_visitante
 
+        # ======================
+        # PRINT RESULTADO
+        # ======================
+
         print(
-            fixture_id,
-            p.get("partido"),
-            status,
-            goles_local,
-            goles_visitante
+            f"{p.get('partido')} "
+            f"{status} "
+            f"{goles_local}-{goles_visitante}"
         )
 
         resultado = "loss"
@@ -249,9 +251,10 @@ for p in picks:
             f"⚽ {p.get('partido')}\n"
             f"🏆 {p.get('liga')}\n"
             f"👉 {p.get('mercado')}\n"
+            f"📊 Marcador: {goles_local}-{goles_visitante}\n"
             f"💰 Odd: {odd}\n"
             f"💵 Stake: {stake}\n"
-            f"📊 Profit: {round(profit,2)}"
+            f"📈 Profit: {round(profit,2)}"
         )
 
         enviar_telegram(
