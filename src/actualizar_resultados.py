@@ -150,6 +150,8 @@ for p in picks:
 
         status = partido["fixture"]["status"]["short"]
 
+        print(f"📡 Status API: {status}")
+
         # solo terminados reales
         if status not in ["FT", "AET", "PEN"]:
             continue
@@ -181,13 +183,23 @@ for p in picks:
         # LOGICA MERCADOS
         # ======================
 
+        # OVER 1.5
         if (
+            mercado == "Over 1.5"
+            and total > 1
+        ):
+
+            resultado = "win"
+
+        # OVER 2.5
+        elif (
             mercado == "Over 2.5"
             and total > 2
         ):
 
             resultado = "win"
 
+        # BTTS
         elif (
             mercado == "BTTS"
             and goles_local > 0
