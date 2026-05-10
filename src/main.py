@@ -102,7 +102,8 @@ def guardar(picks):
         "value",
         "stake",
         "resultado",
-        "profit"
+        "profit",
+        "notificado"
     ]
 
     with open(
@@ -134,7 +135,8 @@ def guardar(picks):
                 "value": round(p["value"], 2),
                 "stake": p["stake"],
                 "resultado": "pendiente",
-                "profit": 0
+                "profit": 0,
+                "notificado": "no"
             })
 
 # ==============================
@@ -220,10 +222,6 @@ def main():
 
     partidos = obtener_partidos()
 
-    # ==============================
-    # LIGAS
-    # ==============================
-
     LIGAS_PERMITIDAS = [
 
         "Premier League",
@@ -239,7 +237,6 @@ def main():
 
         "Liga Profesional Argentina",
 
-        "Primera B",
         "Copa Colombia",
 
         "CONMEBOL Libertadores",
@@ -293,10 +290,6 @@ def main():
                 continue
 
             total_lambda = lamL + lamV
-
-            # ==============================
-            # FILTRO OFENSIVO
-            # ==============================
 
             if total_lambda < 2.4:
                 continue
@@ -411,10 +404,6 @@ def main():
                             except:
                                 continue
 
-            # ==============================
-            # AGREGAR PICKS
-            # ==============================
-
             if picks_partido:
 
                 picks.extend(
@@ -441,18 +430,49 @@ def main():
     # ELIMINAR DUPLICADOS
     # ==============================
 
+    ruta_csv = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "picks.csv"
+    )
+
+    existentes = set()
+
+    if os.path.exists(ruta_csv):
+
+        with open(
+            ruta_csv,
+            newline="",
+            encoding="utf-8"
+        ) as f:
+
+            reader = csv.DictReader(f)
+
+            for row in reader:
+
+                clave = (
+                    str(row["fixture_id"])
+                    + "_"
+                    + row["mercado"]
+                )
+
+                existentes.add(clave)
+
     picks_unicos = {}
 
     for p in picks:
 
-        # NO repetir mismo partido + mercado
         clave = (
-            p["match"]
+            str(p["fixture_id"])
             + "_"
             + p["market"]
         )
 
-        # guardar mejor value
+        # evitar picks ya guardados
+        if clave in existentes:
+            continue
+
+        # evitar duplicados del mismo run
         if (
             clave not in picks_unicos
             or p["value"] > picks_unicos[clave]["value"]
@@ -528,17 +548,19 @@ def main():
         )
 
     # ==============================
-    # ENVIAR
+    # GUARDAR Y ENVIAR
     # ==============================
 
     if picks:
 
-        enviar_telegram(
-            mensaje
-        )
-
+        # guardar primero
         guardar(
             picks
+        )
+
+        # luego enviar telegram
+        enviar_telegram(
+            mensaje
         )
 
     else:

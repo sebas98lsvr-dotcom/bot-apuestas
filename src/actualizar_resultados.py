@@ -47,8 +47,11 @@ def enviar_telegram(mensaje):
             timeout=20
         )
 
-    except:
-        pass
+        print("✅ Telegram enviado")
+
+    except Exception as e:
+
+        print("❌ Error Telegram:", e)
 
 # ======================
 # CSV
@@ -76,6 +79,11 @@ with open(
     reader = csv.DictReader(f)
 
     for row in reader:
+
+        # proteger CSV viejos
+        if "notificado" not in row:
+            row["notificado"] = "no"
+
         picks.append(row)
 
 # ======================
@@ -84,7 +92,7 @@ with open(
 
 if len(picks) == 0:
 
-    print("⚠️ No hay picks para actualizar")
+    print("⚠️ No hay picks")
     exit()
 
 # ======================
@@ -95,14 +103,19 @@ wins = 0
 losses = 0
 profit_total = 0
 
+hubo_actualizaciones = False
+
 # ======================
 # PROCESO
 # ======================
 
 for p in picks:
 
-    # solo pendientes
-    if p.get("resultado") != "pendiente":
+    # solo pendientes NO notificados
+    if (
+        p.get("resultado") != "pendiente"
+        or p.get("notificado") == "si"
+    ):
         continue
 
     fixture_id = p.get("fixture_id")
@@ -137,14 +150,26 @@ for p in picks:
 
         status = partido["fixture"]["status"]["short"]
 
-        # solo terminados
-        if status != "FT":
+        # solo terminados reales
+        if status not in ["FT", "AET", "PEN"]:
             continue
 
         goles_local = partido["goals"]["home"]
         goles_visitante = partido["goals"]["away"]
 
+        # seguridad extra
+        if goles_local is None or goles_visitante is None:
+            continue
+
         total = goles_local + goles_visitante
+
+        print(
+            fixture_id,
+            p.get("partido"),
+            status,
+            goles_local,
+            goles_visitante
+        )
 
         resultado = "loss"
 
@@ -169,8 +194,13 @@ for p in picks:
 
             resultado = "win"
 
-        odd = float(p.get("odd", 0))
-        stake = float(p.get("stake", 1))
+        odd = float(
+            p.get("odd", 0)
+        )
+
+        stake = float(
+            p.get("stake", 1)
+        )
 
         # ======================
         # PROFIT
@@ -178,18 +208,31 @@ for p in picks:
 
         if resultado == "win":
 
-            profit = (odd - 1) * stake
+            profit = (
+                (odd - 1) * stake
+            )
+
             wins += 1
 
         else:
 
             profit = -stake
+
             losses += 1
 
         profit_total += profit
 
         p["resultado"] = resultado
-        p["profit"] = round(profit, 2)
+
+        p["profit"] = round(
+            profit,
+            2
+        )
+
+        # evitar repetir telegram
+        p["notificado"] = "si"
+
+        hubo_actualizaciones = True
 
         # ======================
         # TELEGRAM INDIVIDUAL
@@ -211,15 +254,32 @@ for p in picks:
             f"📊 Profit: {round(profit,2)}"
         )
 
-        enviar_telegram(mensaje)
+        enviar_telegram(
+            mensaje
+        )
 
     except Exception as e:
 
-        print("Error:", e)
+        print("❌ Error:", e)
 
 # ======================
 # GUARDAR CSV
 # ======================
+
+campos = [
+    "fecha",
+    "fixture_id",
+    "partido",
+    "liga",
+    "mercado",
+    "odd",
+    "prob",
+    "value",
+    "stake",
+    "resultado",
+    "profit",
+    "notificado"
+]
 
 with open(
     ruta,
@@ -230,10 +290,11 @@ with open(
 
     writer = csv.DictWriter(
         f,
-        fieldnames=picks[0].keys()
+        fieldnames=campos
     )
 
     writer.writeheader()
+
     writer.writerows(picks)
 
 # ======================
@@ -242,7 +303,10 @@ with open(
 
 total_picks = wins + losses
 
-if total_picks > 0:
+if (
+    total_picks > 0
+    and hubo_actualizaciones
+):
 
     winrate = round(
         (wins / total_picks) * 100,
@@ -258,6 +322,8 @@ if total_picks > 0:
         f"📈 Winrate: {winrate}%"
     )
 
-    enviar_telegram(resumen)
+    enviar_telegram(
+        resumen
+    )
 
 print("✅ Resultados actualizados")
