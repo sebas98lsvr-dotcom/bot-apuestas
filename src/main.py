@@ -1,12 +1,16 @@
 import csv
 import os
 import requests
-from datetime import datetime
 from dotenv import load_dotenv
 
 from api_datos import obtener_partidos
 from odds_api import obtener_odds
-from stats_api import obtener_stats_equipo
+
+from stats_api import (
+    obtener_stats_equipo,
+    obtener_forma_reciente
+)
+
 from modelo import (
     prob_over_25,
     prob_btts,
@@ -73,7 +77,7 @@ def enviar_telegram(mensaje):
             timeout=20
         )
 
-        print("✅ Mensaje enviado")
+        print("✅ Telegram enviado")
 
     except Exception as e:
 
@@ -100,6 +104,7 @@ def guardar(picks):
         "odd",
         "prob",
         "value",
+        "score",
         "stake",
         "resultado",
         "profit",
@@ -125,7 +130,7 @@ def guardar(picks):
 
             writer.writerow({
 
-                "fecha": datetime.now(),
+                "fecha": p["date"],
                 "fixture_id": p["fixture_id"],
                 "partido": p["match"],
                 "liga": p["league"],
@@ -133,6 +138,7 @@ def guardar(picks):
                 "odd": p["odd"],
                 "prob": round(p["prob"], 2),
                 "value": round(p["value"], 2),
+                "score": round(p["score"], 2),
                 "stake": p["stake"],
                 "resultado": "pendiente",
                 "profit": 0,
@@ -168,6 +174,10 @@ def calcular_lambdas(p):
         home_id = p["teams"]["home"]["id"]
         away_id = p["teams"]["away"]["id"]
 
+        # ==============================
+        # STATS TEMPORADA
+        # ==============================
+
         stats_home = obtener_stats_equipo(
             home_id,
             league_id,
@@ -195,24 +205,85 @@ def calcular_lambdas(p):
         if not stats_home or not stats_away:
             return None, None
 
-        atk_home = float(
+        # ==============================
+        # PROMEDIOS TEMPORADA
+        # ==============================
+
+        atk_home_temp = float(
             stats_home["goals"]["for"]["average"]["home"]
         )
 
-        def_home = float(
+        def_home_temp = float(
             stats_home["goals"]["against"]["average"]["home"]
         )
 
-        atk_away = float(
+        atk_away_temp = float(
             stats_away["goals"]["for"]["average"]["away"]
         )
 
-        def_away = float(
+        def_away_temp = float(
             stats_away["goals"]["against"]["average"]["away"]
         )
 
+        # ==============================
+        # FORMA RECIENTE
+        # ==============================
+
+        forma_home = obtener_forma_reciente(
+            home_id
+        )
+
+        forma_away = obtener_forma_reciente(
+            away_id
+        )
+
+        # Si falla forma reciente
+        if not forma_home or not forma_away:
+
+            lam_local = atk_home_temp * max(def_away_temp, 0.5)
+            lam_visit = atk_away_temp * max(def_home_temp, 0.5)
+
+            return (
+                min(lam_local, 4),
+                min(lam_visit, 4)
+            )
+
+        # ==============================
+        # MEZCLA TEMPORADA + FORMA
+        # ==============================
+
+        atk_home = (
+            atk_home_temp * 0.7
+            + forma_home["gf"] * 0.3
+        )
+
+        def_home = (
+            def_home_temp * 0.7
+            + forma_home["gc"] * 0.3
+        )
+
+        atk_away = (
+            atk_away_temp * 0.7
+            + forma_away["gf"] * 0.3
+        )
+
+        def_away = (
+            def_away_temp * 0.7
+            + forma_away["gc"] * 0.3
+        )
+
+        # ==============================
+        # LAMBDAS
+        # ==============================
+
         lam_local = atk_home * max(def_away, 0.5)
         lam_visit = atk_away * max(def_home, 0.5)
+
+        print(
+            f"📈 Forma reciente aplicada "
+            f"| Home GF: {round(forma_home['gf'],2)} "
+            f"| Away GF: {round(forma_away['gf'],2)}"
+        )
 
         return (
             min(lam_local, 4),
@@ -237,40 +308,21 @@ def main():
 
     partidos = obtener_partidos()
 
-    # ==============================
-    # LIGAS PERMITIDAS
-    # ==============================
-
     LIGAS_PERMITIDAS = [
 
-        # INGLATERRA
         "Premier League",
-
-        # ALEMANIA
         "Bundesliga",
-
-        # ESPAÑA
         "La Liga",
-
-        # ITALIA
         "Serie A",
         "Coppa Italia",
-
-        # COLOMBIA
         "Primera A",
         "Primera B",
         "Copa Colombia",
-
-        # ARGENTINA
         "Liga Profesional Argentina",
         "Copa Argentina",
-
-        # BRASIL
         "Serie A Brasil",
         "Brasileirao",
         "Serie A",
-
-        # EUROPA
         "UEFA Champions League",
         "UEFA Europa League"
     ]
@@ -299,26 +351,16 @@ def main():
             local = p["teams"]["home"]["name"]
             visitante = p["teams"]["away"]["name"]
 
-            print(f"\n⚽ Analizando: {local} vs {visitante}")
+            print(f"\n⚽ {local} vs {visitante}")
 
             league_name = p["league"]["name"]
 
-            print(f"🏆 Liga detectada: {league_name}")
-
             if league_name not in LIGAS_PERMITIDAS:
-
-                print(f"❌ Liga bloqueada: {league_name}")
-
                 continue
-
-            print(f"✅ Liga permitida: {league_name}")
 
             odds = obtener_odds(fixture_id)
 
             if not odds:
-
-                print("❌ Sin odds")
-
                 continue
 
             bets = []
@@ -328,14 +370,9 @@ def main():
                 if "bets" in book:
                     bets.extend(book["bets"])
 
-            print(f"💰 Odds válidas: {len(bets)}")
-
             lamL, lamV = calcular_lambdas(p)
 
             if lamL is None:
-
-                print("❌ Sin lambdas")
-
                 continue
 
             total_lambda = lamL + lamV
@@ -357,11 +394,6 @@ def main():
                 lamL,
                 lamV
             )
-
-            print(f"📊 Lambda total: {round(total_lambda,2)}")
-            print(f"📈 Prob Over2.5: {round(prob_o,2)}")
-            print(f"📈 Prob BTTS: {round(prob_b,2)}")
-            print(f"📈 Prob Over1.5: {round(prob_o15,2)}")
 
             picks_partido = []
 
@@ -395,13 +427,20 @@ def main():
                                     and 1.20 <= odd <= 1.80
                                 ):
 
-                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
-
                                     stake = calcular_stake(
                                         BANK,
                                         val,
                                         odd
                                     )
+
+                                    score = (
+                                        (val * 100)
+                                        + (prob_o15 * 10)
+                                        + total_lambda
+                                    )
+
+                                    if score < 18:
+                                        continue
 
                                     picks_partido.append({
 
@@ -413,6 +452,7 @@ def main():
                                         "odd": odd,
                                         "prob": prob_o15,
                                         "value": val,
+                                        "score": round(score, 2),
                                         "stake": stake
                                     })
 
@@ -439,13 +479,20 @@ def main():
                                     and 1.60 <= odd <= 2.90
                                 ):
 
-                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
-
                                     stake = calcular_stake(
                                         BANK,
                                         val,
                                         odd
                                     )
+
+                                    score = (
+                                        (val * 100)
+                                        + (prob_o * 10)
+                                        + total_lambda
+                                    )
+
+                                    if score < 18:
+                                        continue
 
                                     picks_partido.append({
 
@@ -457,6 +504,7 @@ def main():
                                         "odd": odd,
                                         "prob": prob_o,
                                         "value": val,
+                                        "score": round(score, 2),
                                         "stake": stake
                                     })
 
@@ -489,13 +537,20 @@ def main():
                                     and 1.55 <= odd <= 2.70
                                 ):
 
-                                    print(f"🔥 PICK ENCONTRADA: {local} vs {visitante}")
-
                                     stake = calcular_stake(
                                         BANK,
                                         val,
                                         odd
                                     )
+
+                                    score = (
+                                        (val * 100)
+                                        + (prob_b * 10)
+                                        + total_lambda
+                                    )
+
+                                    if score < 18:
+                                        continue
 
                                     picks_partido.append({
 
@@ -507,16 +562,32 @@ def main():
                                         "odd": odd,
                                         "prob": prob_b,
                                         "value": val,
+                                        "score": round(score, 2),
                                         "stake": stake
                                     })
 
                             except:
                                 continue
 
+            # ==============================
+            # SOLO MEJOR PICK
+            # ==============================
+
             if picks_partido:
 
-                picks.extend(
-                    picks_partido
+                mejor_pick = max(
+                    picks_partido,
+                    key=lambda x: x["score"]
+                )
+
+                picks.append(
+                    mejor_pick
+                )
+
+                print(
+                    f"🏆 Mejor pick: "
+                    f"{mejor_pick['market']} "
+                    f"| Score: {round(mejor_pick['score'],2)}"
                 )
 
                 with open(
@@ -582,7 +653,7 @@ def main():
 
         if (
             clave not in picks_unicos
-            or p["value"] > picks_unicos[clave]["value"]
+            or p["score"] > picks_unicos[clave]["score"]
         ):
 
             picks_unicos[clave] = p
@@ -599,7 +670,7 @@ def main():
 
         picks,
 
-        key=lambda x: x["value"],
+        key=lambda x: x["score"],
 
         reverse=True
 
@@ -613,45 +684,21 @@ def main():
     # TELEGRAM
     # ==============================
 
-    mensaje = "🔥 PICKS DEL BOT 🔥\n\n"
-
-    agrupados = {}
+    mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
 
     for p in picks:
 
-        partido = p["match"]
-
-        if partido not in agrupados:
-            agrupados[partido] = []
-
-        agrupados[partido].append(p)
-
-    for partido, lista in agrupados.items():
-
-        primera = lista[0]
-
         mensaje += (
-            f"⚽ {partido}\n"
-            f"🏆 {primera['league']}\n"
-            f"📅 {primera['date']}\n\n"
-            f"🔥 POSIBLES PICKS\n"
-        )
-
-        for p in lista:
-
-            mensaje += (
-                f"• {p['market']} → {p['odd']}\n"
-            )
-
-        mejor = max(
-            lista,
-            key=lambda x: x["value"]
-        )
-
-        mensaje += (
-            f"\n📊 Mejor Pick: {mejor['market']}\n"
-            f"🔥 Value: {round(mejor['value'],2)}\n"
-            f"💵 Stake: {mejor['stake']}\n\n"
+            f"🔥 PICK TOP 🔥\n"
+            f"⚽ {p['match']}\n"
+            f"🏆 {p['league']}\n"
+            f"📅 {p['date']}\n"
+            f"🎯 {p['market']}\n"
+            f"💰 Odds: {p['odd']}\n"
+            f"📊 Prob: {round(p['prob'],2)}\n"
+            f"🔥 Value: {round(p['value'],2)}\n"
+            f"⭐ Score: {round(p['score'],2)}\n"
+            f"💵 Stake: {p['stake']}\n\n"
         )
 
     # ==============================
@@ -673,7 +720,7 @@ def main():
     else:
 
         print(
-            "⚠️ No hubo picks nuevos"
+            "⚠️ No hubo picks nuevas"
         )
 
 # ==============================
