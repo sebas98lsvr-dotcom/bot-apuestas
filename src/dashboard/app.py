@@ -41,7 +41,7 @@ def home():
         df = pd.DataFrame()
 
     # =========================
-    # ESTADISTICAS
+    # VARIABLES
     # =========================
 
     total = len(df)
@@ -52,6 +52,15 @@ def home():
 
     profit = 0
     stake_total = 0
+
+    score_promedio = 0
+
+    historial = []
+    top_picks = []
+
+    # =========================
+    # ESTADISTICAS
+    # =========================
 
     if not df.empty:
 
@@ -67,15 +76,58 @@ def home():
             df[df["resultado"] == "pendiente"]
         )
 
+        # =========================
+        # SOLO PICKS CERRADAS
+        # =========================
+
+        cerradas = df[
+            df["resultado"] != "pendiente"
+        ]
+
         profit = round(
-            df["profit"].sum(),
+            cerradas["profit"].sum(),
             2
         )
 
         stake_total = round(
-            df["stake"].sum(),
+            cerradas["stake"].sum(),
             2
         )
+
+        # =========================
+        # SCORE PROMEDIO
+        # =========================
+
+        if "score" in df.columns:
+
+            score_promedio = round(
+                df["score"].mean(),
+                2
+            )
+
+        # =========================
+        # HISTORIAL
+        # =========================
+
+        historial = df.sort_values(
+            by="fecha",
+            ascending=False
+        ).fillna("").to_dict(
+            orient="records"
+        )
+
+        # =========================
+        # TOP PICKS
+        # =========================
+
+        if "score" in df.columns:
+
+            top_picks = df.sort_values(
+                by="score",
+                ascending=False
+            ).head(10).fillna("").to_dict(
+                orient="records"
+            )
 
     # =========================
     # WINRATE
@@ -93,7 +145,7 @@ def home():
         winrate = 0
 
     # =========================
-    # ROI
+    # ROI REAL
     # =========================
 
     if stake_total > 0:
@@ -106,21 +158,6 @@ def home():
     else:
 
         roi = 0
-
-    # =========================
-    # HISTORIAL
-    # =========================
-
-    historial = []
-
-    if not df.empty:
-
-        historial = df.sort_values(
-            by="fecha",
-            ascending=False
-        ).fillna("").to_dict(
-            orient="records"
-        )
 
     # =========================
     # MERCADOS
@@ -168,6 +205,54 @@ def home():
                 "total": total_m,
                 "winrate": wr,
                 "profit": profit_m
+            })
+
+    # =========================
+    # LIGAS
+    # =========================
+
+    ligas = []
+
+    if not df.empty:
+
+        for liga in df["liga"].unique():
+
+            d = df[
+                df["liga"] == liga
+            ]
+
+            total_l = len(d)
+
+            w = len(
+                d[d["resultado"] == "win"]
+            )
+
+            l = len(
+                d[d["resultado"] == "loss"]
+            )
+
+            if (w + l) > 0:
+
+                wr = round(
+                    (w / (w + l)) * 100,
+                    2
+                )
+
+            else:
+
+                wr = 0
+
+            profit_l = round(
+                d["profit"].sum(),
+                2
+            )
+
+            ligas.append({
+
+                "liga": liga,
+                "total": total_l,
+                "winrate": wr,
+                "profit": profit_l
             })
 
     # =========================
@@ -236,6 +321,7 @@ def home():
         "roi": roi,
         "profit_total": profit,
         "stake_total": stake_total,
+        "score_promedio": score_promedio,
 
         "grafica_labels": list(
             range(len(profits))
@@ -283,8 +369,10 @@ def home():
         stats=stats,
         historial=historial,
         mercados=mercados,
+        ligas=ligas,
         profits=profits,
-        winrates=winrates
+        winrates=winrates,
+        top_picks=top_picks
     )
 
 # =========================

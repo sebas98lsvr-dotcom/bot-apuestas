@@ -73,6 +73,10 @@ h1,h2,h3{
     color:#38bdf8;
 }
 
+.purple{
+    color:#c084fc;
+}
+
 table{
     width:100%;
     border-collapse:collapse;
@@ -123,6 +127,11 @@ tr:hover{
 .badge-pend{
     background:#713f12;
     color:#facc15;
+}
+
+.badge-elite{
+    background:#3b0764;
+    color:#d8b4fe;
 }
 
 canvas{
@@ -192,7 +201,7 @@ Seguimiento profesional del bot de apuestas
     </div>
 
     <div class="card">
-        <div class="card-title">💰 ROI</div>
+        <div class="card-title">💰 ROI REAL</div>
         <div class="card-value">
             {{ stats.roi }}%
         </div>
@@ -213,6 +222,54 @@ Seguimiento profesional del bot de apuestas
         </div>
     </div>
 
+    <div class="card">
+        <div class="card-title purple">⭐ Score Promedio</div>
+        <div class="card-value purple">
+            {{ stats.score_promedio }}
+        </div>
+    </div>
+
+</div>
+
+<!-- ========================= -->
+<!-- LIGAS -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>🏆 Rendimiento por Liga</h2>
+
+<table>
+
+<tr>
+    <th>Liga</th>
+    <th>Total</th>
+    <th>Winrate</th>
+    <th>Profit</th>
+</tr>
+
+{% for l in ligas %}
+
+<tr>
+
+    <td>{{ l.liga }}</td>
+
+    <td>{{ l.total }}</td>
+
+    <td class="blue">
+        {{ l.winrate }}%
+    </td>
+
+    <td class="{% if l.profit >= 0 %}green{% else %}red{% endif %}">
+        {{ l.profit }}
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
 </div>
 
 <!-- ========================= -->
@@ -221,7 +278,7 @@ Seguimiento profesional del bot de apuestas
 
 <div class="section">
 
-<h2>📊 Rendimiento por mercado</h2>
+<h2>📊 Rendimiento por Mercado</h2>
 
 <table>
 
@@ -259,6 +316,59 @@ Seguimiento profesional del bot de apuestas
 </div>
 
 <!-- ========================= -->
+<!-- TOP PICKS -->
+<!-- ========================= -->
+
+<div class="section">
+
+<h2>🔥 TOP PICKS</h2>
+
+<table>
+
+<tr>
+    <th>Partido</th>
+    <th>Mercado</th>
+    <th>Odd</th>
+    <th>Score</th>
+</tr>
+
+{% for p in top_picks %}
+
+<tr>
+
+    <td>{{ p.partido }}</td>
+
+    <td>{{ p.mercado }}</td>
+
+    <td>{{ p.odd }}</td>
+
+    <td>
+
+        {% if p.score and p.score >= 25 %}
+
+            <span class="badge badge-elite">
+                ⭐ ELITE {{ p.score }}
+            </span>
+
+        {% else %}
+
+            <span class="purple">
+                {{ p.score if p.score else "-" }}
+            </span>
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+<!-- ========================= -->
 <!-- PICKS -->
 <!-- ========================= -->
 
@@ -275,6 +385,7 @@ Seguimiento profesional del bot de apuestas
     <th>Mercado</th>
     <th>Odd</th>
     <th>Value</th>
+    <th>Score</th>
     <th>Stake</th>
     <th>Resultado</th>
     <th>Profit</th>
@@ -290,6 +401,25 @@ Seguimiento profesional del bot de apuestas
     <td>{{ p.mercado }}</td>
     <td>{{ p.odd }}</td>
     <td>{{ p.value }}</td>
+
+    <td>
+
+        {% if p.score and p.score >= 25 %}
+
+            <span class="badge badge-elite">
+                ⭐ {{ p.score }}
+            </span>
+
+        {% else %}
+
+            <span class="purple">
+                {{ p.score if p.score else "-" }}
+            </span>
+
+        {% endif %}
+
+    </td>
+
     <td>{{ p.stake }}</td>
 
     <td>
