@@ -344,19 +344,39 @@ Seguimiento profesional del bot de apuestas
 
     <td>
 
-        {% if p.score and p.score >= 25 %}
+    {% if p.score %}
+
+        {% if p.score >= 25 %}
 
             <span class="badge badge-elite">
                 ⭐ ELITE {{ p.score }}
             </span>
 
+        {% elif p.score >= 22 %}
+
+            <span class="badge badge-win">
+                🟢 PREMIUM {{ p.score }}
+            </span>
+
+        {% elif p.score >= 18 %}
+
+            <span class="badge badge-pend">
+                🟡 GOOD {{ p.score }}
+            </span>
+
         {% else %}
 
             <span class="purple">
-                {{ p.score if p.score else "-" }}
+                {{ p.score }}
             </span>
 
         {% endif %}
+
+    {% else %}
+
+        -
+
+    {% endif %}
 
     </td>
 
@@ -404,19 +424,39 @@ Seguimiento profesional del bot de apuestas
 
     <td>
 
-        {% if p.score and p.score >= 25 %}
+    {% if p.score %}
+
+        {% if p.score >= 25 %}
 
             <span class="badge badge-elite">
-                ⭐ {{ p.score }}
+                ⭐ ELITE {{ p.score }}
+            </span>
+
+        {% elif p.score >= 22 %}
+
+            <span class="badge badge-win">
+                🟢 PREMIUM {{ p.score }}
+            </span>
+
+        {% elif p.score >= 18 %}
+
+            <span class="badge badge-pend">
+                🟡 GOOD {{ p.score }}
             </span>
 
         {% else %}
 
             <span class="purple">
-                {{ p.score if p.score else "-" }}
+                {{ p.score }}
             </span>
 
         {% endif %}
+
+    {% else %}
+
+        -
+
+    {% endif %}
 
     </td>
 

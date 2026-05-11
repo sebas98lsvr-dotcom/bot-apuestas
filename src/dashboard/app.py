@@ -56,7 +56,10 @@ def home():
     score_promedio = 0
 
     historial = []
+
     top_picks = []
+
+    elite_picks = []
 
     # =========================
     # ESTADISTICAS
@@ -100,10 +103,19 @@ def home():
 
         if "score" in df.columns:
 
-            score_promedio = round(
-                df["score"].mean(),
-                2
-            )
+            try:
+
+                score_promedio = round(
+                    pd.to_numeric(
+                        df["score"],
+                        errors="coerce"
+                    ).mean(),
+                    2
+                )
+
+            except:
+
+                score_promedio = 0
 
         # =========================
         # HISTORIAL
@@ -122,12 +134,32 @@ def home():
 
         if "score" in df.columns:
 
-            top_picks = df.sort_values(
-                by="score",
-                ascending=False
-            ).head(10).fillna("").to_dict(
-                orient="records"
-            )
+            try:
+
+                df["score_num"] = pd.to_numeric(
+                    df["score"],
+                    errors="coerce"
+                )
+
+                top_picks = df.sort_values(
+                    by="score_num",
+                    ascending=False
+                ).head(10).fillna("").to_dict(
+                    orient="records"
+                )
+
+                elite_picks = df[
+                    df["score_num"] >= 25
+                ].sort_values(
+                    by="score_num",
+                    ascending=False
+                ).fillna("").to_dict(
+                    orient="records"
+                )
+
+            except Exception as e:
+
+                print("Error score:", e)
 
     # =========================
     # WINRATE
@@ -372,7 +404,8 @@ def home():
         ligas=ligas,
         profits=profits,
         winrates=winrates,
-        top_picks=top_picks
+        top_picks=top_picks,
+        elite_picks=elite_picks
     )
 
 # =========================
