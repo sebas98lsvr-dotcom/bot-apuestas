@@ -13,3 +13,6 @@ fecha,fixture_id,partido,liga,mercado,odd,prob,value,stake,resultado,profit,noti
 2026-05-11 12:37:50.809328,1391175,Osasuna vs Atletico Madrid,La Liga,Over 2.5,1.88,0.68,0.07,30.0,pendiente,0,no
 2026-05-11 12:37:50.809336,1391171,Celta Vigo vs Levante,La Liga,BTTS,1.75,0.72,0.06,30.0,pendiente,0,no
 2026-05-11 12:37:50.809343,1391614,Oleksandria vs Zorya Luhansk,Premier League,Over 1.5,1.3,0.92,0.05,30.0,pendiente,0,no
+2026-05-13 17:00,1391178,Villarreal vs Sevilla,La Liga,Over 2.5,1.91,0.85,0.16,29.11,30.0,pendiente,0,no
+2026-05-12 22:00,1544849,Belgrano Cordoba vs Union Santa Fe,Liga Profesional Argentina,Over 2.5,2.62,0.63,0.16,25.85,30.0,pendiente,0,no
+2026-05-13 17:00,1391172,Espanyol vs Athletic Club,La Liga,Over 2.5,2.25,0.67,0.13,22.84,30.0,pendiente,0,no
