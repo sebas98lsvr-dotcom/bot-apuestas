@@ -1,6 +1,7 @@
 import time
 import subprocess
 import sys
+import os
 from datetime import datetime
 import pytz
 
@@ -10,12 +11,37 @@ except:
     pass
 
 # =========================
+# RUTAS SEGURAS
+# =========================
+
+BASE_DIR = os.path.dirname(
+    os.path.dirname(__file__)
+)
+
+MAIN_FILE = os.path.join(
+    BASE_DIR,
+    "src",
+    "main.py"
+)
+
+ACTUALIZAR_FILE = os.path.join(
+    BASE_DIR,
+    "src",
+    "actualizar_resultados.py"
+)
+
+TELEGRAM_FILE = os.path.join(
+    BASE_DIR,
+    "enviar_telegram.py"
+)
+
+# =========================
 # CONTROL EJECUCION
 # =========================
 
 ultimas_horas = []
 
-print("🚀 AUTO_RUN INICIADOOOOOO")
+print("🚀 AUTO_RUN INICIADO")
 
 while True:
 
@@ -35,7 +61,12 @@ while True:
         # HORARIOS DE PICKS
         # =========================
 
-        horarios = [5, 10, 17, 22]
+        horarios = [
+            5,
+            10,
+            17,
+            22
+        ]
 
         clave = f"{hoy}_{hora_actual}"
 
@@ -46,19 +77,31 @@ while True:
 
             print("📊 Generando picks...")
 
-            subprocess.run([
-                sys.executable,
-                "src/main.py"
-            ])
+            subprocess.run(
+                [
+                    sys.executable,
+                    MAIN_FILE
+                ],
+                cwd=BASE_DIR
+            )
 
             print("📨 Enviando Telegram...")
 
-            subprocess.run([
-                sys.executable,
-                "enviar_telegram.py"
-            ])
+            subprocess.run(
+                [
+                    sys.executable,
+                    TELEGRAM_FILE
+                ],
+                cwd=BASE_DIR
+            )
 
-            ultimas_horas.append(clave)
+            ultimas_horas.append(
+                clave
+            )
+
+            # limpiar memoria de horas viejas
+            if len(ultimas_horas) > 20:
+                ultimas_horas = ultimas_horas[-20:]
 
             print("✅ Picks enviados")
 
@@ -74,12 +117,15 @@ while True:
 
             print("🔄 Actualizando resultados...")
 
-            subprocess.run([
-                sys.executable,
-                "src/actualizar_resultados.py"
-            ])
+            subprocess.run(
+                [
+                    sys.executable,
+                    ACTUALIZAR_FILE
+                ],
+                cwd=BASE_DIR
+            )
 
-            print("✅ Resultados actualizados")
+            print("✅ Revisión de resultados terminada")
 
         except Exception as e:
 

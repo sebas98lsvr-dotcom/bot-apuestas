@@ -33,12 +33,7 @@ def home():
 
     try:
 
-        df = pd.read_csv(
-            ruta_csv,
-            dtype={
-                "score": str
-            }
-        )
+        df = pd.read_csv(ruta_csv)
 
         print("✅ CSV cargado correctamente")
         print("📊 Filas cargadas:", len(df))
@@ -117,26 +112,6 @@ def home():
                 df[col] = ""
 
         # =========================
-        # LIMPIAR TEXTO
-        # =========================
-
-        df["score"] = (
-            df["score"]
-            .fillna("")
-            .astype(str)
-            .str.strip()
-        )
-
-        df["score"] = df["score"].replace(
-            {
-                "nan": "",
-                "None": "",
-                "0": "",
-                "0.0": ""
-            }
-        )
-
-        # =========================
         # LIMPIAR RESULTADO
         # =========================
 
@@ -149,13 +124,13 @@ def home():
 
         # =========================
         # CONVERTIR NUMEROS
-        # OJO: score NO va aquí porque es marcador tipo 1-2
         # =========================
 
         columnas_numericas = [
             "odd",
             "prob",
             "value",
+            "score",
             "stake",
             "profit"
         ]
@@ -225,13 +200,12 @@ def home():
 
         # =========================
         # SCORE PROMEDIO
-        # ahora usamos value promedio como score/calidad promedio
         # =========================
 
         try:
 
             score_promedio = round(
-                df["value"].mean(),
+                df["score"].mean(),
                 2
             )
 
@@ -257,8 +231,7 @@ def home():
                     "fecha_limpia",
                     "fecha_orden",
                     "partido",
-                    "resultado",
-                    "score"
+                    "resultado"
                 ]
             ].head(10)
         )
@@ -281,11 +254,10 @@ def home():
 
         # =========================
         # TOP PICKS
-        # usar value para ordenar, no score
         # =========================
 
         df["score_num"] = pd.to_numeric(
-            df["value"],
+            df["score"],
             errors="coerce"
         ).fillna(0)
 
@@ -311,7 +283,7 @@ def home():
         )
 
         elite_picks = (
-            df[df["score_num"] >= 0.15]
+            df[df["score_num"] >= 25]
             .sort_values(
                 by="score_num",
                 ascending=False

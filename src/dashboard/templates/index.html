@@ -112,6 +112,7 @@ tr:hover{
     border-radius:8px;
     font-size:12px;
     font-weight:bold;
+    display:inline-block;
 }
 
 .badge-win{
@@ -134,11 +135,18 @@ tr:hover{
     color:#d8b4fe;
 }
 
+.badge-score{
+    background:#0f172a;
+    border:1px solid #334155;
+    color:#e2e8f0;
+}
+
 canvas{
     background:#0f172a;
     padding:20px;
     border-radius:14px;
     margin-top:20px;
+    max-height:420px;
 }
 
 </style>
@@ -223,7 +231,7 @@ Seguimiento profesional del bot de apuestas
     </div>
 
     <div class="card">
-        <div class="card-title purple">⭐ Score Promedio</div>
+        <div class="card-title purple">⭐ Value Promedio</div>
         <div class="card-value purple">
             {{ stats.score_promedio }}
         </div>
@@ -329,6 +337,8 @@ Seguimiento profesional del bot de apuestas
     <th>Partido</th>
     <th>Mercado</th>
     <th>Odd</th>
+    <th>Value</th>
+    <th>Nivel</th>
     <th>Score</th>
 </tr>
 
@@ -342,41 +352,51 @@ Seguimiento profesional del bot de apuestas
 
     <td>{{ p.odd }}</td>
 
+    <td>{{ p.value }}</td>
+
     <td>
 
-    {% if p.score %}
-
-        {% if p.score >= 25 %}
+        {% if p.stake|float >= 30 %}
 
             <span class="badge badge-elite">
-                ⭐ ELITE {{ p.score }}
+                ⭐ ELITE {{ p.stake }}
             </span>
 
-        {% elif p.score >= 22 %}
+        {% elif p.stake|float >= 25 %}
 
             <span class="badge badge-win">
-                🟢 PREMIUM {{ p.score }}
+                🟢 PREMIUM {{ p.stake }}
             </span>
 
-        {% elif p.score >= 18 %}
+        {% elif p.stake|float >= 18 %}
 
             <span class="badge badge-pend">
-                🟡 GOOD {{ p.score }}
+                🟡 GOOD {{ p.stake }}
             </span>
 
         {% else %}
 
             <span class="purple">
-                {{ p.score }}
+                {{ p.stake }}
             </span>
 
         {% endif %}
 
-    {% else %}
+    </td>
 
-        -
+    <td>
 
-    {% endif %}
+        {% if p.score %}
+
+            <span class="badge badge-score">
+                {{ p.score }}
+            </span>
+
+        {% else %}
+
+            -
+
+        {% endif %}
 
     </td>
 
@@ -405,6 +425,7 @@ Seguimiento profesional del bot de apuestas
     <th>Mercado</th>
     <th>Odd</th>
     <th>Value</th>
+    <th>Nivel</th>
     <th>Score</th>
     <th>Stake</th>
     <th>Resultado</th>
@@ -424,39 +445,47 @@ Seguimiento profesional del bot de apuestas
 
     <td>
 
-    {% if p.score %}
-
-        {% if p.score >= 25 %}
+        {% if p.stake|float >= 30 %}
 
             <span class="badge badge-elite">
-                ⭐ ELITE {{ p.score }}
+                ⭐ ELITE {{ p.stake }}
             </span>
 
-        {% elif p.score >= 22 %}
+        {% elif p.stake|float >= 25 %}
 
             <span class="badge badge-win">
-                🟢 PREMIUM {{ p.score }}
+                🟢 PREMIUM {{ p.stake }}
             </span>
 
-        {% elif p.score >= 18 %}
+        {% elif p.stake|float >= 18 %}
 
             <span class="badge badge-pend">
-                🟡 GOOD {{ p.score }}
+                🟡 GOOD {{ p.stake }}
             </span>
 
         {% else %}
 
             <span class="purple">
-                {{ p.score }}
+                {{ p.stake }}
             </span>
 
         {% endif %}
 
-    {% else %}
+    </td>
 
-        -
+    <td>
 
-    {% endif %}
+        {% if p.score %}
+
+            <span class="badge badge-score">
+                {{ p.score }}
+            </span>
+
+        {% else %}
+
+            -
+
+        {% endif %}
 
     </td>
 
@@ -486,7 +515,7 @@ Seguimiento profesional del bot de apuestas
 
     </td>
 
-    <td class="{% if p.profit >= 0 %}green{% else %}red{% endif %}">
+    <td class="{% if p.profit|float >= 0 %}green{% else %}red{% endif %}">
         {{ p.profit }}
     </td>
 
@@ -522,53 +551,125 @@ Seguimiento profesional del bot de apuestas
 
 </div>
 
+<script type="application/json" id="grafica-labels">
+{{ stats.grafica_labels | tojson }}
+</script>
+
+<script type="application/json" id="profit-acumulado">
+{{ stats.profit_acumulado | tojson }}
+</script>
+
+<script type="application/json" id="mercados-labels">
+{{ stats.mercados_labels | tojson }}
+</script>
+
+<script type="application/json" id="mercados-winrate">
+{{ stats.mercados_winrate | tojson }}
+</script>
+
 <script>
 
-const ctx = document
-.getElementById('profitChart');
+const graficaLabels = JSON.parse(
+    document.getElementById("grafica-labels").textContent
+);
+
+const profitAcumulado = JSON.parse(
+    document.getElementById("profit-acumulado").textContent
+);
+
+const mercadosLabels = JSON.parse(
+    document.getElementById("mercados-labels").textContent
+);
+
+const mercadosWinrate = JSON.parse(
+    document.getElementById("mercados-winrate").textContent
+);
+
+const ctx = document.getElementById("profitChart");
 
 new Chart(ctx, {
 
-    type: 'line',
+    type: "line",
 
     data: {
 
-        labels: {{ stats.grafica_labels | tojson }},
+        labels: graficaLabels,
 
         datasets: [{
 
-            label: 'Profit',
+            label: "Profit",
 
-            data: {{ stats.profit_acumulado | tojson }},
+            data: profitAcumulado,
 
             borderWidth: 3,
 
             tension: 0.3
 
         }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                display: true
+
+            }
+
+        }
+
     }
 });
 
-const ctx2 = document
-.getElementById('mercadosChart');
+const ctx2 = document.getElementById("mercadosChart");
 
 new Chart(ctx2, {
 
-    type: 'bar',
+    type: "bar",
 
     data: {
 
-        labels: {{ stats.mercados_labels | tojson }},
+        labels: mercadosLabels,
 
         datasets: [{
 
-            label: 'Winrate %',
+            label: "Winrate %",
 
-            data: {{ stats.mercados_winrate | tojson }},
+            data: mercadosWinrate,
 
             borderWidth: 2
 
         }]
+    },
+
+    options: {
+
+        responsive: true,
+
+        plugins: {
+
+            legend: {
+
+                display: true
+
+            }
+
+        },
+
+        scales: {
+
+            y: {
+
+                beginAtZero: true
+
+            }
+
+        }
+
     }
 });
 
