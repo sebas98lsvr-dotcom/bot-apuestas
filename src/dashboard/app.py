@@ -24,21 +24,96 @@ ruta_csv = os.path.join(
 print("📂 CSV:", ruta_csv)
 
 # =========================
+# FUNCION CARGAR CSV
+# =========================
+
+def cargar_csv():
+
+    try:
+
+        df = pd.read_csv(ruta_csv)
+
+        print("✅ CSV cargado correctamente")
+        print("📊 Total filas:", len(df))
+
+    except Exception as e:
+
+        print("❌ Error CSV:", e)
+
+        df = pd.DataFrame()
+
+    if df.empty:
+
+        return df
+
+    # =========================
+    # LIMPIEZA COLUMNAS
+    # =========================
+
+    df.columns = df.columns.str.strip()
+
+    # =========================
+    # LIMPIEZA RESULTADO
+    # =========================
+
+    if "resultado" in df.columns:
+
+        df["resultado"] = (
+            df["resultado"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+    # =========================
+    # CONVERTIR NUMEROS
+    # =========================
+
+    columnas_numericas = [
+        "odd",
+        "prob",
+        "value",
+        "score",
+        "stake",
+        "profit"
+    ]
+
+    for col in columnas_numericas:
+
+        if col in df.columns:
+
+            df[col] = pd.to_numeric(
+                df[col],
+                errors="coerce"
+            ).fillna(0)
+
+    # =========================
+    # CONVERTIR FECHA REAL
+    # =========================
+
+    if "fecha" in df.columns:
+
+        df["fecha_dt"] = pd.to_datetime(
+            df["fecha"],
+            errors="coerce"
+        )
+
+        df = df.sort_values(
+            by="fecha_dt",
+            ascending=False
+        )
+
+    return df
+
+
+# =========================
 # HOME
 # =========================
 
 @app.route("/")
 def home():
 
-    try:
-
-        df = pd.read_csv(ruta_csv)
-
-    except Exception as e:
-
-        print("Error CSV:", e)
-
-        df = pd.DataFrame()
+    df = cargar_csv()
 
     # =========================
     # VARIABLES
@@ -61,11 +136,23 @@ def home():
 
     elite_picks = []
 
+    mercados = []
+
+    ligas = []
+
+    profits = []
+
+    winrates = []
+
     # =========================
-    # ESTADISTICAS
+    # SI HAY DATA
     # =========================
 
     if not df.empty:
+
+        # =========================
+        # ESTADISTICAS GENERALES
+        # =========================
 
         wins = len(
             df[df["resultado"] == "win"]
@@ -87,15 +174,19 @@ def home():
             df["resultado"] != "pendiente"
         ]
 
-        profit = round(
-            cerradas["profit"].sum(),
-            2
-        )
+        if "profit" in cerradas.columns:
 
-        stake_total = round(
-            cerradas["stake"].sum(),
-            2
-        )
+            profit = round(
+                cerradas["profit"].sum(),
+                2
+            )
+
+        if "stake" in cerradas.columns:
+
+            stake_total = round(
+                cerradas["stake"].sum(),
+                2
+            )
 
         # =========================
         # SCORE PROMEDIO
@@ -103,30 +194,28 @@ def home():
 
         if "score" in df.columns:
 
-            try:
-
-                score_promedio = round(
-                    pd.to_numeric(
-                        df["score"],
-                        errors="coerce"
-                    ).mean(),
-                    2
-                )
-
-            except:
-
-                score_promedio = 0
+            score_promedio = round(
+                df["score"].mean(),
+                2
+            )
 
         # =========================
-        # HISTORIAL
+        # HISTORIAL ORDENADO NUEVO A VIEJO
         # =========================
 
-        historial = df.sort_values(
-            by="fecha",
-            ascending=False
-        ).fillna("").to_dict(
-            orient="records"
+        historial = (
+            df
+            .sort_values(
+                by="fecha_dt",
+                ascending=False
+            )
+            .drop(columns=["fecha_dt"], errors="ignore")
+            .fillna("")
+            .to_dict(orient="records")
         )
+
+        print("🕒 Ultimos picks dashboard:")
+        print(df[["fecha", "partido", "resultado"]].head(5))
 
         # =========================
         # TOP PICKS
@@ -134,32 +223,169 @@ def home():
 
         if "score" in df.columns:
 
-            try:
-
-                df["score_num"] = pd.to_numeric(
-                    df["score"],
-                    errors="coerce"
-                )
-
-                top_picks = df.sort_values(
-                    by="score_num",
+            top_picks = (
+                df
+                .sort_values(
+                    by="score",
                     ascending=False
-                ).head(10).fillna("").to_dict(
-                    orient="records"
                 )
+                .head(10)
+                .drop(columns=["fecha_dt"], errors="ignore")
+                .fillna("")
+                .to_dict(orient="records")
+            )
 
-                elite_picks = df[
-                    df["score_num"] >= 25
-                ].sort_values(
-                    by="score_num",
+            elite_picks = (
+                df[df["score"] >= 25]
+                .sort_values(
+                    by="score",
                     ascending=False
-                ).fillna("").to_dict(
-                    orient="records"
+                )
+                .drop(columns=["fecha_dt"], errors="ignore")
+                .fillna("")
+                .to_dict(orient="records")
+            )
+
+        # =========================
+        # MERCADOS
+        # =========================
+
+        if "mercado" in df.columns:
+
+            for mercado in df["mercado"].dropna().unique():
+
+                d = df[
+                    df["mercado"] == mercado
+                ]
+
+                total_m = len(d)
+
+                w = len(
+                    d[d["resultado"] == "win"]
                 )
 
-            except Exception as e:
+                l = len(
+                    d[d["resultado"] == "loss"]
+                )
 
-                print("Error score:", e)
+                if (w + l) > 0:
+
+                    wr = round(
+                        (w / (w + l)) * 100,
+                        2
+                    )
+
+                else:
+
+                    wr = 0
+
+                profit_m = round(
+                    d["profit"].sum(),
+                    2
+                )
+
+                mercados.append({
+
+                    "mercado": mercado,
+                    "total": total_m,
+                    "winrate": wr,
+                    "profit": profit_m
+                })
+
+        # =========================
+        # LIGAS
+        # =========================
+
+        if "liga" in df.columns:
+
+            for liga in df["liga"].dropna().unique():
+
+                d = df[
+                    df["liga"] == liga
+                ]
+
+                total_l = len(d)
+
+                w = len(
+                    d[d["resultado"] == "win"]
+                )
+
+                l = len(
+                    d[d["resultado"] == "loss"]
+                )
+
+                if (w + l) > 0:
+
+                    wr = round(
+                        (w / (w + l)) * 100,
+                        2
+                    )
+
+                else:
+
+                    wr = 0
+
+                profit_l = round(
+                    d["profit"].sum(),
+                    2
+                )
+
+                ligas.append({
+
+                    "liga": liga,
+                    "total": total_l,
+                    "winrate": wr,
+                    "profit": profit_l
+                })
+
+        # =========================
+        # GRAFICA PROFIT EN ORDEN CRONOLOGICO
+        # =========================
+
+        df_grafica = df.sort_values(
+            by="fecha_dt",
+            ascending=True
+        ).copy()
+
+        df_grafica["profit_acumulado"] = (
+            df_grafica["profit"].cumsum()
+        )
+
+        profits = df_grafica[
+            "profit_acumulado"
+        ].round(2).tolist()
+
+        # =========================
+        # GRAFICA WINRATE EN ORDEN CRONOLOGICO
+        # =========================
+
+        acumulado_w = 0
+        acumulado_total = 0
+
+        for _, row in df_grafica.iterrows():
+
+            if row["resultado"] == "win":
+
+                acumulado_w += 1
+
+            if row["resultado"] != "pendiente":
+
+                acumulado_total += 1
+
+            if acumulado_total > 0:
+
+                wr = (
+                    acumulado_w
+                    / acumulado_total
+                ) * 100
+
+            else:
+
+                wr = 0
+
+            winrates.append(
+                round(wr, 2)
+            )
 
     # =========================
     # WINRATE
@@ -190,154 +416,6 @@ def home():
     else:
 
         roi = 0
-
-    # =========================
-    # MERCADOS
-    # =========================
-
-    mercados = []
-
-    if not df.empty:
-
-        for mercado in df["mercado"].unique():
-
-            d = df[
-                df["mercado"] == mercado
-            ]
-
-            total_m = len(d)
-
-            w = len(
-                d[d["resultado"] == "win"]
-            )
-
-            l = len(
-                d[d["resultado"] == "loss"]
-            )
-
-            if (w + l) > 0:
-
-                wr = round(
-                    (w / (w + l)) * 100,
-                    2
-                )
-
-            else:
-
-                wr = 0
-
-            profit_m = round(
-                d["profit"].sum(),
-                2
-            )
-
-            mercados.append({
-
-                "mercado": mercado,
-                "total": total_m,
-                "winrate": wr,
-                "profit": profit_m
-            })
-
-    # =========================
-    # LIGAS
-    # =========================
-
-    ligas = []
-
-    if not df.empty:
-
-        for liga in df["liga"].unique():
-
-            d = df[
-                df["liga"] == liga
-            ]
-
-            total_l = len(d)
-
-            w = len(
-                d[d["resultado"] == "win"]
-            )
-
-            l = len(
-                d[d["resultado"] == "loss"]
-            )
-
-            if (w + l) > 0:
-
-                wr = round(
-                    (w / (w + l)) * 100,
-                    2
-                )
-
-            else:
-
-                wr = 0
-
-            profit_l = round(
-                d["profit"].sum(),
-                2
-            )
-
-            ligas.append({
-
-                "liga": liga,
-                "total": total_l,
-                "winrate": wr,
-                "profit": profit_l
-            })
-
-    # =========================
-    # GRAFICA PROFIT
-    # =========================
-
-    profits = []
-
-    if not df.empty:
-
-        df["profit_acumulado"] = (
-            df["profit"].cumsum()
-        )
-
-        profits = df[
-            "profit_acumulado"
-        ].tolist()
-
-    # =========================
-    # GRAFICA WINRATE
-    # =========================
-
-    winrates = []
-
-    if not df.empty:
-
-        acumulado_w = 0
-        acumulado_total = 0
-
-        for _, row in df.iterrows():
-
-            if row["resultado"] == "win":
-
-                acumulado_w += 1
-
-            if row["resultado"] != "pendiente":
-
-                acumulado_total += 1
-
-            if acumulado_total > 0:
-
-                wr = (
-                    acumulado_w
-                    / acumulado_total
-                ) * 100
-
-            else:
-
-                wr = 0
-
-            winrates.append(
-                round(wr, 2)
-            )
 
     # =========================
     # STATS
@@ -407,6 +485,7 @@ def home():
         top_picks=top_picks,
         elite_picks=elite_picks
     )
+
 
 # =========================
 # START
