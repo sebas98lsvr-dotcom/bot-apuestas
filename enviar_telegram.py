@@ -187,9 +187,8 @@ def enviar_picks():
 
             try:
 
-                value = to_float(row.get("value", 0))
-                prob = to_float(row.get("prob", 0))
                 odd = to_float(row.get("odd", 0))
+                score = to_float(row.get("score", 0))
 
                 resultado = normalizar(row.get("resultado", ""))
                 notificado = normalizar(row.get("notificado", ""))
@@ -202,11 +201,11 @@ def enviar_picks():
                 if notificado == "si":
                     continue
 
-                # FILTRO PICKS
-                # Este filtro permite tus picks actuales con value 0.09
+                # FILTRO DE SEGURIDAD COHERENTE CON MAIN.PY
+                # MAIN.PY YA FILTRA SCORE >= 18
                 if (
-                    value >= 0.08
-                    and odd <= 3.5
+                    odd > 0
+                    and score >= 18
                 ):
 
                     picks_validas.append(row)
@@ -222,7 +221,7 @@ def enviar_picks():
 
         picks_validas = sorted(
             picks_validas,
-            key=lambda x: to_float(x.get("value", 0)),
+            key=lambda x: to_float(x.get("score", 0)),
             reverse=True
         )[:10]
 
@@ -247,11 +246,12 @@ def enviar_picks():
                 f"🔥 PICK TOP 🔥\n"
                 f"⚽ {row.get('partido', '-')}\n"
                 f"🏆 {row.get('liga', '-')}\n"
-                f"📅 {row.get('fecha', '-')[:16]}\n"
+                f"📅 Partido: {row.get('fecha', '-')[:16]}\n"
                 f"👉 {row.get('mercado', '-')}\n"
                 f"💰 Odds: {row.get('odd', '-')}\n"
                 f"📊 Prob: {row.get('prob', '-')}\n"
                 f"🔥 Value: {row.get('value', '-')}\n"
+                f"⭐ Score: {row.get('score', '-')}\n"
                 f"💵 Stake: {row.get('stake', '-')}\n\n"
             )
 

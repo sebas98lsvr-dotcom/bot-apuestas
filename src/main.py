@@ -1,7 +1,13 @@
 import csv
 import os
-import requests
+from datetime import datetime
 from dotenv import load_dotenv
+
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    ZoneInfo = None
+    import pytz
 
 from api_datos import obtener_partidos
 from odds_api import obtener_odds
@@ -30,9 +36,6 @@ ruta_env = os.path.join(
 
 load_dotenv(ruta_env)
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = os.getenv("CHAT_ID")
-
 # ==============================
 # ARCHIVO ENVIADOS
 # ==============================
@@ -56,32 +59,70 @@ with open(RUTA_ENVIADOS, "r") as f:
     )
 
 # ==============================
-# TELEGRAM
+# CONVERTIR FECHA A COLOMBIA
 # ==============================
 
-def enviar_telegram(mensaje):
+def convertir_fecha_colombia(fecha_api):
 
     try:
 
-        url = (
-            f"https://api.telegram.org/bot"
-            f"{TELEGRAM_TOKEN}/sendMessage"
+        fecha_api = str(fecha_api).strip()
+
+        # API suele venir así:
+        # 2026-05-14T18:00:00+00:00
+        # o así:
+        # 2026-05-14T18:00:00Z
+
+        fecha_utc = datetime.fromisoformat(
+            fecha_api.replace("Z", "+00:00")
         )
 
-        requests.get(
-            url,
-            params={
-                "chat_id": CHAT_ID,
-                "text": mensaje
-            },
-            timeout=20
-        )
+        if fecha_utc.tzinfo is None:
 
-        print("✅ Telegram enviado")
+            if ZoneInfo is not None:
+                fecha_utc = fecha_utc.replace(
+                    tzinfo=ZoneInfo("UTC")
+                )
+            else:
+                fecha_utc = pytz.utc.localize(
+                    fecha_utc
+                )
+
+        if ZoneInfo is not None:
+
+            zona_colombia = ZoneInfo(
+                "America/Bogota"
+            )
+
+            fecha_colombia = fecha_utc.astimezone(
+                zona_colombia
+            )
+
+        else:
+
+            zona_colombia = pytz.timezone(
+                "America/Bogota"
+            )
+
+            fecha_colombia = fecha_utc.astimezone(
+                zona_colombia
+            )
+
+        return fecha_colombia.strftime(
+            "%Y-%m-%d %H:%M"
+        )
 
     except Exception as e:
 
-        print("❌ Error Telegram:", e)
+        print(
+            "⚠️ Error convirtiendo fecha:",
+            e
+        )
+
+        return (
+            str(fecha_api)[:16]
+            .replace("T", " ")
+        )
 
 # ==============================
 # GUARDAR CSV
@@ -343,15 +384,15 @@ def main():
             if fixture_id in ENVIADOS:
                 continue
 
-            fecha_partido = (
-                p["fixture"]["date"][:16]
-                .replace("T", " ")
+            fecha_partido = convertir_fecha_colombia(
+                p["fixture"]["date"]
             )
 
             local = p["teams"]["home"]["name"]
             visitante = p["teams"]["away"]["name"]
 
             print(f"\n⚽ {local} vs {visitante}")
+            print(f"📅 Fecha partido Colombia: {fecha_partido}")
 
             league_name = p["league"]["name"]
 
@@ -681,28 +722,7 @@ def main():
     )
 
     # ==============================
-    # TELEGRAM
-    # ==============================
-
-    mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
-
-    for p in picks:
-
-        mensaje += (
-            f"🔥 PICK TOP 🔥\n"
-            f"⚽ {p['match']}\n"
-            f"🏆 {p['league']}\n"
-            f"📅 {p['date']}\n"
-            f"🎯 {p['market']}\n"
-            f"💰 Odds: {p['odd']}\n"
-            f"📊 Prob: {round(p['prob'],2)}\n"
-            f"🔥 Value: {round(p['value'],2)}\n"
-            f"⭐ Score: {round(p['score'],2)}\n"
-            f"💵 Stake: {p['stake']}\n\n"
-        )
-
-    # ==============================
-    # GUARDAR Y ENVIAR
+    # GUARDAR PICKS
     # ==============================
 
     if picks:
@@ -712,10 +732,8 @@ def main():
         )
 
         print(f"💾 Picks guardadas: {len(picks)}")
-
-        enviar_telegram(
-            mensaje
-        )
+        print("📌 Picks guardadas con notificado = no")
+        print("📨 El envío a Telegram lo hará enviar_telegram.py")
 
     else:
 
