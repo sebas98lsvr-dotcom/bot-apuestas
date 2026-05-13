@@ -6,12 +6,14 @@ fecha,fixture_id,partido,liga,mercado,odd,prob,value,score,stake,resultado,profi
 2026-05-08 17:40:00.000000,1493001,Bahia vs Cruzeiro,Brasileirao,Over 2.5,2.07,0.85,0.19,,30.0,win,32.1,si
 2026-05-08 17:40:00.000002,1493010,Atletico-MG vs Botafogo,Brasileirao,Over 2.5,2.0,0.85,0.17,,30.0,loss,-30.0,si
 2026-05-11 12:37:50.809255,1391614,Oleksandria vs Zorya Luhansk,Premier League,Over 2.5,1.96,0.78,0.13,1-2,30.0,win,28.8,si
-2026-05-11 12:37:50.809289,1544227,Atletico Nacional vs Internacional de Bogota,Primera A,Over 2.5,1.8,0.83,0.12,,30.0,pendiente,0,no
-2026-05-11 12:37:50.809304,1391170,Real Betis vs Elche,La Liga,Over 2.5,1.73,0.85,0.12,,30.0,pendiente,0,no
+2026-05-11 12:37:50.809289,1544227,Atletico Nacional vs Internacional de Bogota,Primera A,Over 2.5,1.8,0.83,0.12,,30.0,pendiente,0,si
+2026-05-11 12:37:50.809304,1391170,Real Betis vs Elche,La Liga,Over 2.5,1.73,0.85,0.12,,30.0,pendiente,0,si
 2026-05-11 12:37:50.809313,1391171,Celta Vigo vs Levante,La Liga,Over 2.5,1.86,0.77,0.11,2-3,30.0,win,25.8,si
 2026-05-11 12:37:50.809321,1391615,Epitsentr Dunayivtsi vs Polessya,Premier League,Over 2.5,1.9,0.75,0.11,3-2,30.0,win,27.0,si
-2026-05-11 12:37:50.809328,1391175,Osasuna vs Atletico Madrid,La Liga,BTTS,1.88,0.68,0.07,,30.0,pendiente,0,no
+2026-05-11 12:37:50.809328,1391175,Osasuna vs Atletico Madrid,La Liga,BTTS,1.88,0.68,0.07,,30.0,pendiente,0,si
 2026-05-11 12:37:50.809336,1391171,Celta Vigo vs Levante,La Liga,BTTS,1.75,0.72,0.06,2-3,30.0,win,22.5,si
-2026-05-13 17:00,1391178,Villarreal vs Sevilla,La Liga,Over 2.5,1.91,0.85,0.16,,30.0,pendiente,0,no
-2026-05-22 22:00,1544849,Belgrano Cordoba vs Union Santa Fe,Liga Profesional Argentina,Over 2.5,2.62,0.63,0.16,,30.0,pendiente,0,no
-2026-05-13 17:00,1391172,Espanyol vs Athletic Club,La Liga,Over 2.5,2.25,0.67,0.13,,30.0,pendiente,0,no
+2026-05-13 17:00,1391178,Villarreal vs Sevilla,La Liga,Over 2.5,1.91,0.85,0.16,,30.0,pendiente,0,si
+2026-05-22 22:00,1544849,Belgrano Cordoba vs Union Santa Fe,Liga Profesional Argentina,Over 2.5,2.62,0.63,0.16,,30.0,pendiente,0,si
+2026-05-13 17:00,1391172,Espanyol vs Athletic Club,La Liga,Over 2.5,2.25,0.67,0.13,,30.0,pendiente,0,si
+2026-05-14 02:00,1544563,Portmore United vs Racing United,Premier League,Over 2.5,2.15,0.64,0.09,19.1,30.0,pendiente,0,si
+2026-05-14 14:40,1526453,Al Jahra vs Al Nasar,Premier League,Over 2.5,2.05,0.66,0.09,18.67,30.0,pendiente,0,si

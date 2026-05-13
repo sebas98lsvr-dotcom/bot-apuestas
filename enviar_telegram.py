@@ -1,6 +1,8 @@
 import requests
 import csv
 import os
+import tempfile
+import shutil
 
 # =========================
 # TELEGRAM
@@ -10,6 +12,13 @@ TOKEN = "8393109030:AAGLfsuMveQXITjYSF8JJdmvs1-7AuLiq_E"
 CHAT_ID = "-1003902179873"
 
 # =========================
+# RUTAS
+# =========================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PICKS_PATH = os.path.join(BASE_DIR, "picks.csv")
+
+# =========================
 # ENVIAR MENSAJE
 # =========================
 
@@ -17,10 +26,7 @@ def enviar_mensaje(texto):
 
     try:
 
-        url = (
-            f"https://api.telegram.org/bot"
-            f"{TOKEN}/sendMessage"
-        )
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
         data = {
             "chat_id": CHAT_ID,
@@ -38,14 +44,110 @@ def enviar_mensaje(texto):
         if r.status_code == 200:
 
             print("✅ Telegram enviado")
+            return True
 
         else:
 
             print("❌ Error Telegram")
+            return False
 
     except Exception as e:
 
-        print("❌ Error:", e)
+        print("❌ Error enviando Telegram:", e)
+        return False
+
+
+# =========================
+# NORMALIZAR TEXTO
+# =========================
+
+def normalizar(valor):
+
+    if valor is None:
+        return ""
+
+    return str(valor).strip().lower()
+
+
+# =========================
+# CONVERTIR A FLOAT SEGURO
+# =========================
+
+def to_float(valor, default=0.0):
+
+    try:
+
+        if valor is None:
+            return default
+
+        valor = str(valor).strip()
+
+        if valor == "":
+            return default
+
+        return float(valor)
+
+    except:
+
+        return default
+
+
+# =========================
+# CREAR ID UNICO DE PICK
+# =========================
+
+def pick_key(row):
+
+    return (
+        str(row.get("fixture_id", "")).strip(),
+        str(row.get("partido", "")).strip(),
+        str(row.get("mercado", "")).strip(),
+        str(row.get("odd", "")).strip()
+    )
+
+
+# =========================
+# GUARDAR CSV SEGURO
+# =========================
+
+def guardar_csv_seguro(rows, fieldnames):
+
+    carpeta = os.path.dirname(PICKS_PATH)
+
+    fd, temp_path = tempfile.mkstemp(
+        dir=carpeta,
+        suffix=".csv"
+    )
+
+    os.close(fd)
+
+    try:
+
+        with open(
+            temp_path,
+            "w",
+            newline="",
+            encoding="utf-8"
+        ) as f:
+
+            writer = csv.DictWriter(
+                f,
+                fieldnames=fieldnames,
+                extrasaction="ignore"
+            )
+
+            writer.writeheader()
+            writer.writerows(rows)
+
+        shutil.move(temp_path, PICKS_PATH)
+
+    except Exception as e:
+
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+        raise e
+
 
 # =========================
 # ENVIAR PICKS
@@ -55,112 +157,139 @@ def enviar_picks():
 
     try:
 
-        ruta = os.path.join(
-            os.path.dirname(__file__),
-            "picks.csv"
-        )
-
-        if not os.path.exists(ruta):
+        if not os.path.exists(PICKS_PATH):
 
             print("❌ No existe picks.csv")
             return
 
         with open(
-            ruta,
-            newline='',
+            PICKS_PATH,
+            newline="",
             encoding="utf-8"
         ) as f:
 
             reader = csv.DictReader(f)
+            fieldnames = reader.fieldnames or []
+            rows = list(reader)
 
-            picks_validas = []
+        if not rows:
 
-            for row in reader:
+            print("⚠️ picks.csv está vacío")
+            return
 
-                try:
+        # Asegurar columna notificado
+        if "notificado" not in fieldnames:
+            fieldnames.append("notificado")
 
-                    value = float(row['value'])
-                    prob = float(row['prob'])
-                    odd = float(row['odd'])
+        picks_validas = []
 
-                    # SOLO PICKS PENDIENTES
-                    if row["resultado"] != "pendiente":
-                        continue
+        for row in rows:
 
-                    # FILTRO PICKS
-                    if (
-                        value >= 0.01
-                        and prob >= 0.40
-                        and odd <= 3.5
-                    ):
+            try:
 
-                        picks_validas.append(row)
+                value = to_float(row.get("value", 0))
+                prob = to_float(row.get("prob", 0))
+                odd = to_float(row.get("odd", 0))
 
-                except:
+                resultado = normalizar(row.get("resultado", ""))
+                notificado = normalizar(row.get("notificado", ""))
+
+                # SOLO PICKS PENDIENTES
+                if resultado != "pendiente":
                     continue
 
-            # =========================
-            # ORDENAR PICKS
-            # =========================
+                # NO REPETIR PICKS YA ENVIADAS
+                if notificado == "si":
+                    continue
 
-            picks_validas = sorted(
+                # FILTRO PICKS
+                # Este filtro permite tus picks actuales con value 0.09
+                if (
+                    value >= 0.08
+                    and odd <= 3.5
+                ):
 
-                picks_validas,
+                    picks_validas.append(row)
 
-                key=lambda x: float(x["value"]),
+            except Exception as e:
 
-                reverse=True
+                print("⚠️ Fila ignorada:", e)
+                continue
 
-            )[:10]
+        # =========================
+        # ORDENAR PICKS
+        # =========================
 
-            # =========================
-            # NO HAY PICKS
-            # =========================
+        picks_validas = sorted(
+            picks_validas,
+            key=lambda x: to_float(x.get("value", 0)),
+            reverse=True
+        )[:10]
 
-            if not picks_validas:
+        # =========================
+        # NO HAY PICKS NUEVAS
+        # =========================
 
-                print("⚠️ No hay picks válidas")
+        if not picks_validas:
 
-                enviar_mensaje(
-                    "❌ No hay picks de valor hoy"
-                )
+            print("⚠️ No hay picks nuevas para enviar")
+            return
 
-                return
+        # =========================
+        # MENSAJE
+        # =========================
 
-            # =========================
-            # MENSAJE
-            # =========================
+        mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
 
-            mensaje = (
-                "🔥 PICKS TOP DEL BOT 🔥\n\n"
+        for row in picks_validas:
+
+            mensaje += (
+                f"🔥 PICK TOP 🔥\n"
+                f"⚽ {row.get('partido', '-')}\n"
+                f"🏆 {row.get('liga', '-')}\n"
+                f"📅 {row.get('fecha', '-')[:16]}\n"
+                f"👉 {row.get('mercado', '-')}\n"
+                f"💰 Odds: {row.get('odd', '-')}\n"
+                f"📊 Prob: {row.get('prob', '-')}\n"
+                f"🔥 Value: {row.get('value', '-')}\n"
+                f"💵 Stake: {row.get('stake', '-')}\n\n"
             )
 
-            for row in picks_validas:
+        print(f"📨 Picks nuevas a enviar: {len(picks_validas)}")
 
-                mensaje += (
+        enviado = enviar_mensaje(mensaje)
 
-                    f"🔥 PICK TOP 🔥\n"
-                    f"⚽ {row['partido']}\n"
-                    f"🏆 {row['liga']}\n"
-                    f"📅 {row['fecha'][:16]}\n"
-                    f"👉 {row['mercado']}\n"
-                    f"💰 Odds: {row['odd']}\n"
-                    f"📊 Prob: {row['prob']}\n"
-                    f"🔥 Value: {row['value']}\n"
-                    f"💵 Stake: {row['stake']}\n\n"
-                )
+        if not enviado:
 
-            print(
-                f"📨 Picks enviadas: {len(picks_validas)}"
-            )
+            print("❌ No se marcaron como notificadas porque Telegram falló")
+            return
 
-            enviar_mensaje(
-                mensaje
-            )
+        # =========================
+        # MARCAR COMO NOTIFICADAS
+        # =========================
+
+        keys_enviadas = set(
+            pick_key(row)
+            for row in picks_validas
+        )
+
+        marcadas = 0
+
+        for row in rows:
+
+            if pick_key(row) in keys_enviadas:
+
+                row["notificado"] = "si"
+                marcadas += 1
+
+        guardar_csv_seguro(rows, fieldnames)
+
+        print(f"✅ Picks marcadas como notificadas: {marcadas}")
 
     except Exception as e:
 
         print("❌ ERROR GENERAL:", e)
+
 
 # =========================
 # START
