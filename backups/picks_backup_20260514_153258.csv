@@ -15,20 +15,20 @@ fecha,fixture_id,partido,liga,mercado,odd,prob,value,score,stake,resultado,profi
 2026-05-13 17:00,1391178,Villarreal vs Sevilla,La Liga,Over 2.5,1.91,0.85,0.16,2-3,30.0,win,27.3,si
 2026-05-22 22:00,1544849,Belgrano Cordoba vs Union Santa Fe,Liga Profesional Argentina,Over 2.5,2.62,0.63,0.16,2-0,30.0,loss,-30.0,si
 2026-05-13 17:00,1391172,Espanyol vs Athletic Club,La Liga,Over 2.5,2.25,0.67,0.13,2-0,30.0,loss,-30.0,si
-2026-05-14 02:00,1544563,Portmore United vs Racing United,Premier League,Over 2.5,2.15,0.64,0.09,2-0,30.0,loss,-30.0,si
-2026-05-14 14:40,1526453,Al Jahra vs Al Nasar,Premier League,Over 2.5,2.05,0.66,0.09,0-2,30.0,loss,-30.0,si
-2026-05-14 18:00,1391174,Girona vs Real Sociedad,La Liga,Over 2.5,1.82,0.72,0.07,1-1,30.0,loss,-30.0,si
+2026-05-14 02:00,1544563,Portmore United vs Racing United,Premier League,Over 2.5,2.15,0.64,0.09,19.1,30.0,pendiente,0,si
+2026-05-14 14:40,1526453,Al Jahra vs Al Nasar,Premier League,Over 2.5,2.05,0.66,0.09,18.67,30.0,pendiente,0,si
+2026-05-14 18:00,1391174,Girona vs Real Sociedad,La Liga,Over 2.5,1.82,0.72,0.07,18.36,30.0,pendiente,0,si
 2026-05-15 08:00,1544526,Al Ittihad vs Shorta,Premier League,Over 2.5,1.67,0.85,0.1,23.78,30.0,pendiente,0,si
 2026-05-15 11:45,1525867,FC Minsk vs Belshina,Premier League,Over 2.5,2.19,0.63,0.1,19.17,30.0,pendiente,0,si
 2026-05-14 14:30,1391176,Real Madrid vs Oviedo,La Liga,BTTS,2.0,0.63,0.07,18.05,30.0,pendiente,0,si
-2026-05-15 15:00,1512610,FC Cajamarca vs Sporting Cristal,Primera División,Over 2.5,1.95,0.85,0.16,29.68,30.0,pendiente,0,si
-2026-05-14 20:30,1544858,Municipal Limeño vs FAS,Primera Division,Over 2.5,2.08,0.75,0.14,25.69,30.0,pendiente,0,si
-2026-05-14 20:00,1544854,CF Pachuca vs U.N.A.M. - Pumas,Liga MX,Over 2.5,1.87,0.81,0.13,25.65,30.0,pendiente,0,si
-2026-05-14 15:00,1505080,Libertad Asuncion vs 2 de Mayo,Division Profesional - Apertura,Over 2.5,2.05,0.85,0.19,32.41,30.0,pendiente,0,si
-2026-05-15 13:45,1492698,St Patrick's Athl. vs Shelbourne,Premier Division,Over 2.5,2.0,0.85,0.17,30.97,30.0,pendiente,0,si
-2026-05-15 13:45,1492696,Bohemians vs Drogheda United,Premier Division,BTTS,2.0,0.84,0.17,30.33,30.0,pendiente,0,si
-2026-05-15 13:00,1436206,Al Taawon vs Al Riyadh,Pro League,Over 2.5,1.82,0.85,0.14,27.94,30.0,pendiente,0,si
-2026-05-15 13:15,1491445,Étoile Carouge vs Bellinzona,Challenge League,Over 2.5,1.62,0.85,0.09,22.84,30.0,pendiente,0,si
-2026-05-15 10:45,1380370,Nyiregyhaza vs Kazincbarcikai,NB I,BTTS,1.75,0.79,0.1,22.43,30.0,pendiente,0,si
-2026-05-15 13:15,1491448,FC WIL 1900 vs FC Vaduz,Challenge League,Over 2.5,1.65,0.81,0.08,20.85,30.0,pendiente,0,si
-2026-05-15 13:00,1544651,Bari vs Sudtirol,Serie B,Over 2.5,2.32,0.62,0.11,20.54,30.0,pendiente,0,si
+2026-05-15 15:00,1512610,FC Cajamarca vs Sporting Cristal,Primera División,Over 2.5,1.95,0.85,0.16,29.68,30.0,pendiente,0,no
+2026-05-14 20:30,1544858,Municipal Limeño vs FAS,Primera Division,Over 2.5,2.08,0.75,0.14,25.69,30.0,pendiente,0,no
+2026-05-14 20:00,1544854,CF Pachuca vs U.N.A.M. - Pumas,Liga MX,Over 2.5,1.87,0.81,0.13,25.65,30.0,pendiente,0,no
+2026-05-14 15:00,1505080,Libertad Asuncion vs 2 de Mayo,Division Profesional - Apertura,Over 2.5,2.05,0.85,0.19,32.41,30.0,pendiente,0,no
+2026-05-15 13:45,1492698,St Patrick's Athl. vs Shelbourne,Premier Division,Over 2.5,2.0,0.85,0.17,30.97,30.0,pendiente,0,no
+2026-05-15 13:45,1492696,Bohemians vs Drogheda United,Premier Division,BTTS,2.0,0.84,0.17,30.33,30.0,pendiente,0,no
+2026-05-15 13:00,1436206,Al Taawon vs Al Riyadh,Pro League,Over 2.5,1.82,0.85,0.14,27.94,30.0,pendiente,0,no
+2026-05-15 13:15,1491445,Étoile Carouge vs Bellinzona,Challenge League,Over 2.5,1.62,0.85,0.09,22.84,30.0,pendiente,0,no
+2026-05-15 10:45,1380370,Nyiregyhaza vs Kazincbarcikai,NB I,BTTS,1.75,0.79,0.1,22.43,30.0,pendiente,0,no
+2026-05-15 13:15,1491448,FC WIL 1900 vs FC Vaduz,Challenge League,Over 2.5,1.65,0.81,0.08,20.85,30.0,pendiente,0,no
+2026-05-15 13:00,1544651,Bari vs Sudtirol,Serie B,Over 2.5,2.32,0.62,0.11,20.54,30.0,pendiente,0,no

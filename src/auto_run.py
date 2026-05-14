@@ -62,10 +62,12 @@ while True:
         # =========================
 
         horarios = [
-            5,
-            10,
+            3,
+            7,
+            12,
+            14,
             17,
-            22
+            20
         ]
 
         clave = f"{hoy}_{hora_actual}"
@@ -85,7 +87,7 @@ while True:
                 cwd=BASE_DIR
             )
 
-            print("📨 Enviando Telegram...")
+            print("📨 Enviando picks a Telegram...")
 
             subprocess.run(
                 [
@@ -100,14 +102,14 @@ while True:
             )
 
             # limpiar memoria de horas viejas
-            if len(ultimas_horas) > 20:
-                ultimas_horas = ultimas_horas[-20:]
+            if len(ultimas_horas) > 30:
+                ultimas_horas = ultimas_horas[-30:]
 
-            print("✅ Picks enviados")
+            print("✅ Proceso de picks terminado")
 
         else:
 
-            print("⌛ No es hora de enviar picks todavía")
+            print("⌛ No es hora de generar picks todavía")
 
         # =========================
         # ACTUALIZAR RESULTADOS
@@ -131,6 +133,32 @@ while True:
 
             print(f"⚠️ Error actualizando resultados: {e}")
 
+        # =========================
+        # ENVIAR PICKS PENDIENTES
+        # =========================
+        # Esto evita que picks creados manualmente con main.py
+        # se queden en picks.csv con notificado = no.
+        # No debería repetir porque enviar_telegram.py solo envía
+        # resultado = pendiente y notificado != si.
+
+        try:
+
+            print("📨 Revisando picks pendientes para Telegram...")
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    TELEGRAM_FILE
+                ],
+                cwd=BASE_DIR
+            )
+
+            print("✅ Revisión de Telegram terminada")
+
+        except Exception as e:
+
+            print(f"⚠️ Error enviando picks pendientes: {e}")
+
     except Exception as e:
 
         print(f"❌ ERROR GENERAL: {e}")
@@ -139,6 +167,6 @@ while True:
     # ESPERA
     # =========================
 
-    print("⏳ Esperando 20 minutos...\n")
+    print("⏳ Esperando 30 minutos...\n")
 
-    time.sleep(1200)
+    time.sleep(1800)

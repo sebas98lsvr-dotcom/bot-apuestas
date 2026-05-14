@@ -68,11 +68,6 @@ def convertir_fecha_colombia(fecha_api):
 
         fecha_api = str(fecha_api).strip()
 
-        # API suele venir así:
-        # 2026-05-14T18:00:00+00:00
-        # o así:
-        # 2026-05-14T18:00:00Z
-
         fecha_utc = datetime.fromisoformat(
             fecha_api.replace("Z", "+00:00")
         )
@@ -202,6 +197,268 @@ def prob_over_15(lam_local, lam_visit):
     return 1 - (p0 + p1)
 
 # ==============================
+# CLASIFICAR LIGAS POR PAÍS + NOMBRE
+# ==============================
+
+def obtener_nivel_liga(league_name, country):
+
+    league_name = str(league_name).strip()
+    country = str(country).strip()
+
+    LIGAS_TOP = [
+
+        # Inglaterra
+        ("England", "Premier League"),
+        ("England", "Championship"),
+
+        # España
+        ("Spain", "La Liga"),
+        ("Spain", "LaLiga"),
+        ("Spain", "Primera Division"),
+        ("Spain", "Primera División"),
+
+        # Italia
+        ("Italy", "Serie A"),
+
+        # Alemania
+        ("Germany", "Bundesliga"),
+
+        # Francia
+        ("France", "Ligue 1"),
+
+        # Portugal
+        ("Portugal", "Primeira Liga"),
+        ("Portugal", "Liga Portugal"),
+
+        # Países Bajos
+        ("Netherlands", "Eredivisie"),
+
+        # Brasil
+        ("Brazil", "Serie A"),
+        ("Brazil", "Brasileirao"),
+        ("Brazil", "Serie A Brasil"),
+        ("Brazil", "Brazil Serie A"),
+
+        # Argentina
+        ("Argentina", "Liga Profesional Argentina"),
+        ("Argentina", "Primera División Argentina"),
+
+        # Estados Unidos
+        ("USA", "MLS"),
+        ("USA", "Major League Soccer"),
+
+        # México
+        ("Mexico", "Liga MX"),
+
+        # Internacionales
+        ("World", "UEFA Champions League"),
+        ("World", "UEFA Europa League"),
+        ("World", "Copa Libertadores")
+    ]
+
+    LIGAS_MEDIAS = [
+
+        # Colombia
+        ("Colombia", "Primera A"),
+        ("Colombia", "Primera B"),
+        ("Colombia", "Copa Colombia"),
+
+        # Bélgica
+        ("Belgium", "Jupiler Pro League"),
+        ("Belgium", "Belgian Pro League"),
+
+        # Turquía
+        ("Turkey", "Super Lig"),
+        ("Turkey", "Süper Lig"),
+        ("Turkey", "1. Lig"),
+
+        # Escocia
+        ("Scotland", "Premiership"),
+        ("Scotland", "Scottish Premiership"),
+
+        # Suiza
+        ("Switzerland", "Super League"),
+        ("Switzerland", "Swiss Super League"),
+        ("Switzerland", "Challenge League"),
+
+        # Austria
+        ("Austria", "Bundesliga"),
+        ("Austria", "Austrian Bundesliga"),
+
+        # Dinamarca
+        ("Denmark", "Superliga"),
+        ("Denmark", "Danish Superliga"),
+
+        # Noruega
+        ("Norway", "Eliteserien"),
+
+        # Suecia
+        ("Sweden", "Allsvenskan"),
+
+        # Polonia
+        ("Poland", "Ekstraklasa"),
+        ("Poland", "Poland Ekstraklasa"),
+
+        # Hungría
+        ("Hungary", "NB I"),
+
+        # Rumania
+        ("Romania", "Liga I"),
+        ("Romania", "Romania Liga I"),
+
+        # Serbia
+        ("Serbia", "Super Liga"),
+        ("Serbia", "Serbia Super Liga"),
+
+        # Croacia
+        ("Croatia", "HNL"),
+        ("Croatia", "Croatia HNL"),
+
+        # Grecia
+        ("Greece", "Super League 1"),
+        ("Greece", "Greece Super League"),
+
+        # República Checa
+        ("Czech-Republic", "Czech Liga"),
+        ("Czech-Republic", "Czech First League"),
+
+        # Ecuador
+        ("Ecuador", "Liga Pro"),
+        ("Ecuador", "Liga Pro Ecuador"),
+
+        # Chile
+        ("Chile", "Primera División"),
+        ("Chile", "Primera Division"),
+        ("Chile", "Primera División Chile"),
+        ("Chile", "Primera Division Chile"),
+
+        # Perú
+        ("Peru", "Primera División"),
+        ("Peru", "Segunda División"),
+        ("Peru", "Liga 1"),
+        ("Peru", "Liga 1 Peru"),
+        ("Peru", "Liga 1 Perú"),
+
+        # Paraguay
+        ("Paraguay", "Division Profesional - Apertura"),
+        ("Paraguay", "Primera División Paraguay"),
+        ("Paraguay", "Primera Division Paraguay"),
+
+        # Uruguay
+        ("Uruguay", "Primera División - Apertura"),
+        ("Uruguay", "Primera División Uruguay"),
+        ("Uruguay", "Primera Division Uruguay"),
+
+        # Venezuela
+        ("Venezuela", "Primera División"),
+
+        # Portugal segunda
+        ("Portugal", "Segunda Liga"),
+
+        # Italia segunda
+        ("Italy", "Serie B"),
+
+        # España segunda
+        ("Spain", "Segunda División"),
+        ("Spain", "Segunda Division"),
+
+        # Irlanda
+        ("Ireland", "Premier Division"),
+
+        # Arabia Saudita
+        ("Saudi-Arabia", "Pro League"),
+
+        # Internacionales medias
+        ("World", "UEFA Conference League"),
+        ("World", "Copa Sudamericana"),
+        ("World", "CONCACAF Champions Cup")
+    ]
+
+    if (country, league_name) in LIGAS_TOP:
+        return "TOP"
+
+    if (country, league_name) in LIGAS_MEDIAS:
+        return "MEDIA"
+
+    return None
+
+# ==============================
+# FILTROS POR NIVEL DE LIGA
+# ==============================
+
+def obtener_filtros_mercado(nivel_liga, mercado):
+
+    # TOP = ligas más confiables
+    # MEDIA = ligas trabajables, pero con filtros más duros
+    # Over 1.5 queda como mercado PREMIUM, no como pick suave.
+
+    if nivel_liga == "TOP":
+
+        if mercado == "Over 1.5":
+            return {
+                "min_value": 0.04,
+                "min_prob": 0.78,
+                "min_lambda": 2.70,
+                "min_odd": 1.35,
+                "max_odd": 1.75,
+                "min_score": 20
+            }
+
+        if mercado == "Over 2.5":
+            return {
+                "min_value": 0.03,
+                "min_prob": 0.54,
+                "min_lambda": 2.45,
+                "min_odd": 1.60,
+                "max_odd": 2.90,
+                "min_score": 18
+            }
+
+        if mercado == "BTTS":
+            return {
+                "min_value": 0.03,
+                "min_prob": 0.53,
+                "min_lambda": 2.35,
+                "min_odd": 1.55,
+                "max_odd": 2.70,
+                "min_score": 18
+            }
+
+    if nivel_liga == "MEDIA":
+
+        if mercado == "Over 1.5":
+            return {
+                "min_value": 0.05,
+                "min_prob": 0.82,
+                "min_lambda": 2.90,
+                "min_odd": 1.40,
+                "max_odd": 1.75,
+                "min_score": 22
+            }
+
+        if mercado == "Over 2.5":
+            return {
+                "min_value": 0.04,
+                "min_prob": 0.58,
+                "min_lambda": 2.65,
+                "min_odd": 1.60,
+                "max_odd": 2.90,
+                "min_score": 20
+            }
+
+        if mercado == "BTTS":
+            return {
+                "min_value": 0.04,
+                "min_prob": 0.58,
+                "min_lambda": 2.55,
+                "min_odd": 1.55,
+                "max_odd": 2.70,
+                "min_score": 20
+            }
+
+    return None
+
+# ==============================
 # CALCULAR LAMBDAS
 # ==============================
 
@@ -214,10 +471,6 @@ def calcular_lambdas(p):
 
         home_id = p["teams"]["home"]["id"]
         away_id = p["teams"]["away"]["id"]
-
-        # ==============================
-        # STATS TEMPORADA
-        # ==============================
 
         stats_home = obtener_stats_equipo(
             home_id,
@@ -244,11 +497,8 @@ def calcular_lambdas(p):
         )
 
         if not stats_home or not stats_away:
+            print("⚠️ No hay stats suficientes para uno de los equipos")
             return None, None
-
-        # ==============================
-        # PROMEDIOS TEMPORADA
-        # ==============================
 
         atk_home_temp = float(
             stats_home["goals"]["for"]["average"]["home"]
@@ -266,10 +516,6 @@ def calcular_lambdas(p):
             stats_away["goals"]["against"]["average"]["away"]
         )
 
-        # ==============================
-        # FORMA RECIENTE
-        # ==============================
-
         forma_home = obtener_forma_reciente(
             home_id
         )
@@ -278,8 +524,9 @@ def calcular_lambdas(p):
             away_id
         )
 
-        # Si falla forma reciente
         if not forma_home or not forma_away:
+
+            print("⚠️ Sin forma reciente completa, usando solo stats de temporada")
 
             lam_local = atk_home_temp * max(def_away_temp, 0.5)
             lam_visit = atk_away_temp * max(def_home_temp, 0.5)
@@ -288,10 +535,6 @@ def calcular_lambdas(p):
                 min(lam_local, 4),
                 min(lam_visit, 4)
             )
-
-        # ==============================
-        # MEZCLA TEMPORADA + FORMA
-        # ==============================
 
         atk_home = (
             atk_home_temp * 0.7
@@ -312,10 +555,6 @@ def calcular_lambdas(p):
             def_away_temp * 0.7
             + forma_away["gc"] * 0.3
         )
-
-        # ==============================
-        # LAMBDAS
-        # ==============================
 
         lam_local = atk_home * max(def_away, 0.5)
         lam_visit = atk_away * max(def_home, 0.5)
@@ -349,24 +588,7 @@ def main():
 
     partidos = obtener_partidos()
 
-    LIGAS_PERMITIDAS = [
-
-        "Premier League",
-        "Bundesliga",
-        "La Liga",
-        "Serie A",
-        "Coppa Italia",
-        "Primera A",
-        "Primera B",
-        "Copa Colombia",
-        "Liga Profesional Argentina",
-        "Copa Argentina",
-        "Serie A Brasil",
-        "Brasileirao",
-        "Serie A",
-        "UEFA Champions League",
-        "UEFA Europa League"
-    ]
+    print(f"📋 Partidos recibidos desde la API: {len(partidos)}")
 
     picks = []
 
@@ -374,15 +596,11 @@ def main():
 
         try:
 
-            if p["fixture"]["status"]["short"] != "NS":
-                continue
+            status = p["fixture"]["status"]["short"]
 
             fixture_id = str(
                 p["fixture"]["id"]
             )
-
-            if fixture_id in ENVIADOS:
-                continue
 
             fecha_partido = convertir_fecha_colombia(
                 p["fixture"]["date"]
@@ -390,18 +608,45 @@ def main():
 
             local = p["teams"]["home"]["name"]
             visitante = p["teams"]["away"]["name"]
-
-            print(f"\n⚽ {local} vs {visitante}")
-            print(f"📅 Fecha partido Colombia: {fecha_partido}")
-
             league_name = p["league"]["name"]
+            country = p["league"].get("country", "")
 
-            if league_name not in LIGAS_PERMITIDAS:
+            print("\n==============================")
+            print(f"⚽ {local} vs {visitante}")
+            print(f"🏆 Liga detectada: {league_name}")
+            print(f"🌍 País liga: {country}")
+            print(f"📅 Fecha partido Colombia: {fecha_partido}")
+            print(f"🆔 Fixture ID: {fixture_id}")
+            print(f"📌 Estado API: {status}")
+
+            if status != "NS":
+                print(f"⏭️ Partido ignorado porque no está en estado NS: {status}")
                 continue
+
+            if fixture_id in ENVIADOS:
+                print(f"🔁 Partido ya estaba en enviados.txt: {local} vs {visitante}")
+                continue
+
+            nivel_liga = obtener_nivel_liga(
+                league_name,
+                country
+            )
+
+            if nivel_liga is None:
+                print(f"⛔ Liga no permitida: {league_name} | País: {country}")
+                continue
+
+            if nivel_liga == "TOP":
+                print("🟢 Nivel liga: TOP")
+            elif nivel_liga == "MEDIA":
+                print("🟡 Nivel liga: MEDIA")
+            else:
+                print("⚪ Nivel liga: permitida sin categoría")
 
             odds = obtener_odds(fixture_id)
 
             if not odds:
+                print(f"⚠️ Sin odds disponibles: {local} vs {visitante}")
                 continue
 
             bets = []
@@ -411,14 +656,24 @@ def main():
                 if "bets" in book:
                     bets.extend(book["bets"])
 
+            print(f"🎲 Mercados encontrados en odds: {len(bets)}")
+
             lamL, lamV = calcular_lambdas(p)
 
             if lamL is None:
+                print(f"⚠️ Sin lambdas/stats suficientes: {local} vs {visitante}")
                 continue
 
             total_lambda = lamL + lamV
 
+            print(
+                f"📊 Lambdas | Local: {round(lamL,2)} "
+                f"| Visitante: {round(lamV,2)} "
+                f"| Total: {round(total_lambda,2)}"
+            )
+
             if total_lambda < 2.1:
+                print(f"⛔ Descartado por lambda baja general: {round(total_lambda,2)}")
                 continue
 
             prob_o = prob_over_25(
@@ -434,6 +689,13 @@ def main():
             prob_o15 = prob_over_15(
                 lamL,
                 lamV
+            )
+
+            print(
+                f"🧠 Probabilidades modelo "
+                f"| Over 1.5: {round(prob_o15,2)} "
+                f"| Over 2.5: {round(prob_o,2)} "
+                f"| BTTS: {round(prob_b,2)}"
             )
 
             picks_partido = []
@@ -461,11 +723,22 @@ def main():
                                     odd
                                 )
 
+                                filtros = obtener_filtros_mercado(
+                                    nivel_liga,
+                                    "Over 1.5"
+                                )
+
+                                score = (
+                                    (val * 100)
+                                    + (prob_o15 * 10)
+                                    + total_lambda
+                                )
+
                                 if (
-                                    val > 0.02
-                                    and prob_o15 > 0.70
-                                    and total_lambda > 2.1
-                                    and 1.20 <= odd <= 1.80
+                                    val > filtros["min_value"]
+                                    and prob_o15 > filtros["min_prob"]
+                                    and total_lambda > filtros["min_lambda"]
+                                    and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
                                     stake = calcular_stake(
@@ -474,14 +747,25 @@ def main():
                                         odd
                                     )
 
-                                    score = (
-                                        (val * 100)
-                                        + (prob_o15 * 10)
-                                        + total_lambda
-                                    )
-
-                                    if score < 18:
+                                    if score < filtros["min_score"]:
+                                        print(
+                                            f"⛔ Over 1.5 descartado por score bajo "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)} "
+                                            f"| Score mínimo: {filtros['min_score']}"
+                                        )
                                         continue
+
+                                    print(
+                                        f"✅ Candidato Over 1.5 "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_o15,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Score: {round(score,2)}"
+                                    )
 
                                     picks_partido.append({
 
@@ -497,7 +781,18 @@ def main():
                                         "stake": stake
                                     })
 
-                            except:
+                                else:
+                                    print(
+                                        f"❌ Over 1.5 no cumple filtros "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_o15,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Lambda: {round(total_lambda,2)}"
+                                    )
+
+                            except Exception as e:
+                                print("⚠️ Error evaluando Over 1.5:", e)
                                 continue
 
                         # OVER 2.5
@@ -513,11 +808,22 @@ def main():
                                     odd
                                 )
 
+                                filtros = obtener_filtros_mercado(
+                                    nivel_liga,
+                                    "Over 2.5"
+                                )
+
+                                score = (
+                                    (val * 100)
+                                    + (prob_o * 10)
+                                    + total_lambda
+                                )
+
                                 if (
-                                    val > 0.03
-                                    and prob_o > 0.54
-                                    and total_lambda > 2.45
-                                    and 1.60 <= odd <= 2.90
+                                    val > filtros["min_value"]
+                                    and prob_o > filtros["min_prob"]
+                                    and total_lambda > filtros["min_lambda"]
+                                    and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
                                     stake = calcular_stake(
@@ -526,14 +832,25 @@ def main():
                                         odd
                                     )
 
-                                    score = (
-                                        (val * 100)
-                                        + (prob_o * 10)
-                                        + total_lambda
-                                    )
-
-                                    if score < 18:
+                                    if score < filtros["min_score"]:
+                                        print(
+                                            f"⛔ Over 2.5 descartado por score bajo "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)} "
+                                            f"| Score mínimo: {filtros['min_score']}"
+                                        )
                                         continue
+
+                                    print(
+                                        f"✅ Candidato Over 2.5 "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_o,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Score: {round(score,2)}"
+                                    )
 
                                     picks_partido.append({
 
@@ -549,7 +866,18 @@ def main():
                                         "stake": stake
                                     })
 
-                            except:
+                                else:
+                                    print(
+                                        f"❌ Over 2.5 no cumple filtros "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_o,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Lambda: {round(total_lambda,2)}"
+                                    )
+
+                            except Exception as e:
+                                print("⚠️ Error evaluando Over 2.5:", e)
                                 continue
 
                 # ==============================
@@ -571,11 +899,22 @@ def main():
                                     odd
                                 )
 
+                                filtros = obtener_filtros_mercado(
+                                    nivel_liga,
+                                    "BTTS"
+                                )
+
+                                score = (
+                                    (val * 100)
+                                    + (prob_b * 10)
+                                    + total_lambda
+                                )
+
                                 if (
-                                    val > 0.03
-                                    and prob_b > 0.53
-                                    and total_lambda > 2.35
-                                    and 1.55 <= odd <= 2.70
+                                    val > filtros["min_value"]
+                                    and prob_b > filtros["min_prob"]
+                                    and total_lambda > filtros["min_lambda"]
+                                    and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
                                     stake = calcular_stake(
@@ -584,14 +923,25 @@ def main():
                                         odd
                                     )
 
-                                    score = (
-                                        (val * 100)
-                                        + (prob_b * 10)
-                                        + total_lambda
-                                    )
-
-                                    if score < 18:
+                                    if score < filtros["min_score"]:
+                                        print(
+                                            f"⛔ BTTS descartado por score bajo "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)} "
+                                            f"| Score mínimo: {filtros['min_score']}"
+                                        )
                                         continue
+
+                                    print(
+                                        f"✅ Candidato BTTS "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_b,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Score: {round(score,2)}"
+                                    )
 
                                     picks_partido.append({
 
@@ -607,7 +957,18 @@ def main():
                                         "stake": stake
                                     })
 
-                            except:
+                                else:
+                                    print(
+                                        f"❌ BTTS no cumple filtros "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_b,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Lambda: {round(total_lambda,2)}"
+                                    )
+
+                            except Exception as e:
+                                print("⚠️ Error evaluando BTTS:", e)
                                 continue
 
             # ==============================
@@ -639,6 +1000,9 @@ def main():
                     f.write(
                         fixture_id + "\n"
                     )
+
+            else:
+                print(f"❌ Sin mercado válido para: {local} vs {visitante}")
 
         except Exception as e:
 
@@ -690,6 +1054,10 @@ def main():
         )
 
         if clave in existentes:
+            print(
+                f"🔁 Pick ya existía en picks.csv y no se guardará otra vez: "
+                f"{p['match']} | {p['market']}"
+            )
             continue
 
         if (
