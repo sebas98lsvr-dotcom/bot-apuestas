@@ -61,6 +61,7 @@ def enviar_telegram(mensaje):
             return True
 
         print("⚠️ Telegram status:", r.status_code)
+        print(r.text)
         return False
 
     except Exception as e:
@@ -170,21 +171,22 @@ def evaluar_pick(mercado, goles_local, goles_visitante):
 
 def crear_mensaje_resultado(p, resultado, goles_local, goles_visitante, odd, stake, profit):
 
-    emoji = (
-        "🟢 WIN"
-        if resultado == "win"
-        else "🔴 LOSS"
-    )
+    if resultado == "win":
+        titulo = "✅ PICK GANADA"
+        profit_texto = f"+{round(profit, 2)}"
+    else:
+        titulo = "❌ PICK PERDIDA"
+        profit_texto = f"{round(profit, 2)}"
 
     return (
-        f"{emoji}\n\n"
-        f"⚽ {p.get('partido')}\n"
-        f"🏆 {p.get('liga')}\n"
-        f"👉 {p.get('mercado')}\n"
-        f"📊 Marcador: {goles_local}-{goles_visitante}\n"
+        f"{titulo}\n\n"
+        f"⚽ Partido: {p.get('partido')}\n"
+        f"🏆 Liga: {p.get('liga')}\n"
+        f"🎯 Mercado: {p.get('mercado')}\n"
+        f"📊 Marcador final: {goles_local}-{goles_visitante}\n"
         f"💰 Odd: {odd}\n"
         f"💵 Stake: {stake}\n"
-        f"📈 Profit: {round(profit, 2)}"
+        f"📈 Profit: {profit_texto}"
     )
 
 
@@ -222,6 +224,9 @@ with open(
         if "notificado" not in row:
             row["notificado"] = "no"
 
+        if "resultado_notificado" not in row:
+            row["resultado_notificado"] = "no"
+
         if "score" not in row:
             row["score"] = ""
 
@@ -251,6 +256,7 @@ losses_actualizadas = 0
 profit_actualizado = 0.0
 
 hubo_actualizaciones = False
+hubo_telegram_resultado = False
 
 for p in picks:
 
@@ -258,9 +264,7 @@ for p in picks:
         p.get("resultado", "")
     ).lower()
 
-    # IMPORTANTE:
-    # Revisar TODAS las pendientes,
-    # aunque notificado sea "si".
+    # Solo revisar picks pendientes
     if resultado_actual != "pendiente":
         continue
 
@@ -381,17 +385,23 @@ for p in picks:
 
         profit_actualizado += profit
 
-        # Guardar resultado
+        # Guardar resultado en CSV
         p["score"] = f"{goles_local}-{goles_visitante}"
         p["resultado"] = resultado
         p["profit"] = str(profit)
 
-        # Telegram solo si NO se había notificado antes
-        notificado_actual = limpiar_texto(
-            p.get("notificado", "")
+        # ======================
+        # NUEVA LÓGICA TELEGRAM
+        # ======================
+        # notificado = pick inicial enviada
+        # resultado_notificado = resultado WIN/LOSS enviado
+        # Así no se repite y sí avisa cuando cierre.
+
+        resultado_notificado_actual = limpiar_texto(
+            p.get("resultado_notificado", "no")
         ).lower()
 
-        if notificado_actual != "si":
+        if resultado_notificado_actual != "si":
 
             mensaje = crear_mensaje_resultado(
                 p,
@@ -408,14 +418,8 @@ for p in picks:
             )
 
             if enviado:
-                p["notificado"] = "si"
-
-        else:
-
-            # Si ya estaba notificado como pick,
-            # no repetimos Telegram de resultado.
-            # Pero sí dejamos la fila actualizada.
-            p["notificado"] = "si"
+                p["resultado_notificado"] = "si"
+                hubo_telegram_resultado = True
 
         hubo_actualizaciones = True
 
@@ -484,7 +488,8 @@ campos_base = [
     "stake",
     "resultado",
     "profit",
-    "notificado"
+    "notificado",
+    "resultado_notificado"
 ]
 
 campos = []
