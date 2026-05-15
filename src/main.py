@@ -207,50 +207,38 @@ def obtener_nivel_liga(league_name, country):
 
     LIGAS_TOP = [
 
-        # Inglaterra
         ("England", "Premier League"),
         ("England", "Championship"),
 
-        # España
         ("Spain", "La Liga"),
         ("Spain", "LaLiga"),
         ("Spain", "Primera Division"),
         ("Spain", "Primera División"),
 
-        # Italia
         ("Italy", "Serie A"),
 
-        # Alemania
         ("Germany", "Bundesliga"),
 
-        # Francia
         ("France", "Ligue 1"),
 
-        # Portugal
         ("Portugal", "Primeira Liga"),
         ("Portugal", "Liga Portugal"),
 
-        # Países Bajos
         ("Netherlands", "Eredivisie"),
 
-        # Brasil
         ("Brazil", "Serie A"),
         ("Brazil", "Brasileirao"),
         ("Brazil", "Serie A Brasil"),
         ("Brazil", "Brazil Serie A"),
 
-        # Argentina
         ("Argentina", "Liga Profesional Argentina"),
         ("Argentina", "Primera División Argentina"),
 
-        # Estados Unidos
         ("USA", "MLS"),
         ("USA", "Major League Soccer"),
 
-        # México
         ("Mexico", "Liga MX"),
 
-        # Internacionales
         ("World", "UEFA Champions League"),
         ("World", "UEFA Europa League"),
         ("World", "Copa Libertadores")
@@ -258,117 +246,89 @@ def obtener_nivel_liga(league_name, country):
 
     LIGAS_MEDIAS = [
 
-        # Colombia
         ("Colombia", "Primera A"),
         ("Colombia", "Primera B"),
         ("Colombia", "Copa Colombia"),
 
-        # Bélgica
         ("Belgium", "Jupiler Pro League"),
         ("Belgium", "Belgian Pro League"),
 
-        # Turquía
         ("Turkey", "Super Lig"),
         ("Turkey", "Süper Lig"),
         ("Turkey", "1. Lig"),
 
-        # Escocia
         ("Scotland", "Premiership"),
         ("Scotland", "Scottish Premiership"),
 
-        # Suiza
         ("Switzerland", "Super League"),
         ("Switzerland", "Swiss Super League"),
         ("Switzerland", "Challenge League"),
 
-        # Austria
         ("Austria", "Bundesliga"),
         ("Austria", "Austrian Bundesliga"),
 
-        # Dinamarca
         ("Denmark", "Superliga"),
         ("Denmark", "Danish Superliga"),
 
-        # Noruega
         ("Norway", "Eliteserien"),
 
-        # Suecia
         ("Sweden", "Allsvenskan"),
 
-        # Polonia
         ("Poland", "Ekstraklasa"),
         ("Poland", "Poland Ekstraklasa"),
 
-        # Hungría
         ("Hungary", "NB I"),
 
-        # Rumania
         ("Romania", "Liga I"),
         ("Romania", "Romania Liga I"),
 
-        # Serbia
         ("Serbia", "Super Liga"),
         ("Serbia", "Serbia Super Liga"),
 
-        # Croacia
         ("Croatia", "HNL"),
         ("Croatia", "Croatia HNL"),
 
-        # Grecia
         ("Greece", "Super League 1"),
         ("Greece", "Greece Super League"),
 
-        # República Checa
         ("Czech-Republic", "Czech Liga"),
         ("Czech-Republic", "Czech First League"),
 
-        # Ecuador
         ("Ecuador", "Liga Pro"),
         ("Ecuador", "Liga Pro Ecuador"),
 
-        # Chile
         ("Chile", "Primera División"),
         ("Chile", "Primera Division"),
         ("Chile", "Primera División Chile"),
         ("Chile", "Primera Division Chile"),
 
-        # Perú
         ("Peru", "Primera División"),
         ("Peru", "Segunda División"),
         ("Peru", "Liga 1"),
         ("Peru", "Liga 1 Peru"),
         ("Peru", "Liga 1 Perú"),
 
-        # Paraguay
         ("Paraguay", "Division Profesional - Apertura"),
         ("Paraguay", "Primera División Paraguay"),
         ("Paraguay", "Primera Division Paraguay"),
 
-        # Uruguay
         ("Uruguay", "Primera División - Apertura"),
         ("Uruguay", "Primera División Uruguay"),
         ("Uruguay", "Primera Division Uruguay"),
 
-        # Venezuela
         ("Venezuela", "Primera División"),
 
-        # Portugal segunda
         ("Portugal", "Segunda Liga"),
 
-        # Italia segunda
         ("Italy", "Serie B"),
 
-        # España segunda
         ("Spain", "Segunda División"),
         ("Spain", "Segunda Division"),
 
-        # Irlanda
         ("Ireland", "Premier Division"),
 
-        # Arabia Saudita
         ("Saudi-Arabia", "Pro League"),
 
-        # Internacionales medias
         ("World", "UEFA Conference League"),
         ("World", "Copa Sudamericana"),
         ("World", "CONCACAF Champions Cup")
@@ -388,10 +348,6 @@ def obtener_nivel_liga(league_name, country):
 
 def obtener_filtros_mercado(nivel_liga, mercado):
 
-    # TOP = ligas más confiables
-    # MEDIA = ligas trabajables, pero con filtros más duros
-    # Over 1.5 queda como mercado PREMIUM, no como pick suave.
-
     if nivel_liga == "TOP":
 
         if mercado == "Over 1.5":
@@ -406,10 +362,10 @@ def obtener_filtros_mercado(nivel_liga, mercado):
 
         if mercado == "Over 2.5":
             return {
-                "min_value": 0.03,
-                "min_prob": 0.54,
-                "min_lambda": 2.45,
-                "min_odd": 1.60,
+                "min_value": 0.025,
+                "min_prob": 0.58,
+                "min_lambda": 2.60,
+                "min_odd": 1.45,
                 "max_odd": 2.90,
                 "min_score": 18
             }
@@ -438,12 +394,12 @@ def obtener_filtros_mercado(nivel_liga, mercado):
 
         if mercado == "Over 2.5":
             return {
-                "min_value": 0.04,
-                "min_prob": 0.58,
-                "min_lambda": 2.65,
-                "min_odd": 1.60,
+                "min_value": 0.03,
+                "min_prob": 0.60,
+                "min_lambda": 2.75,
+                "min_odd": 1.45,
                 "max_odd": 2.90,
-                "min_score": 20
+                "min_score": 19
             }
 
         if mercado == "BTTS":
@@ -457,6 +413,76 @@ def obtener_filtros_mercado(nivel_liga, mercado):
             }
 
     return None
+
+# ==============================
+# NORMALIZAR LAMBDAS INFLADAS
+# ==============================
+
+def normalizar_lambdas(lam_local, lam_visit, max_total=4.2):
+
+    try:
+
+        lam_local = float(lam_local)
+        lam_visit = float(lam_visit)
+
+        if lam_local < 0:
+            lam_local = 0
+
+        if lam_visit < 0:
+            lam_visit = 0
+
+        total = lam_local + lam_visit
+
+        if total <= 0:
+            return lam_local, lam_visit
+
+        if total > max_total:
+
+            factor = max_total / total
+
+            lam_local = lam_local * factor
+            lam_visit = lam_visit * factor
+
+            print(
+                f"⚠️ Lambdas normalizadas "
+                f"| Total original: {round(total,2)} "
+                f"| Total nuevo: {round(lam_local + lam_visit,2)}"
+            )
+
+        return lam_local, lam_visit
+
+    except Exception as e:
+
+        print("⚠️ Error normalizando lambdas:", e)
+
+        return lam_local, lam_visit
+
+# ==============================
+# LIMPIAR PROMEDIOS API
+# ==============================
+
+def limpiar_promedio(valor, minimo=0.45):
+
+    try:
+
+        if valor is None:
+            return minimo
+
+        valor = str(valor).strip()
+
+        if valor == "":
+            return minimo
+
+        valor = float(valor)
+
+        if valor <= 0:
+            return minimo
+
+        return valor
+
+    except Exception:
+
+        return minimo
 
 # ==============================
 # CALCULAR LAMBDAS
@@ -500,28 +526,34 @@ def calcular_lambdas(p):
             print("⚠️ No hay stats suficientes para uno de los equipos")
             return None, None
 
-        atk_home_temp = float(
+        atk_home_temp = limpiar_promedio(
             stats_home["goals"]["for"]["average"]["home"]
         )
 
-        def_home_temp = float(
+        def_home_temp = limpiar_promedio(
             stats_home["goals"]["against"]["average"]["home"]
         )
 
-        atk_away_temp = float(
+        atk_away_temp = limpiar_promedio(
             stats_away["goals"]["for"]["average"]["away"]
         )
 
-        def_away_temp = float(
+        def_away_temp = limpiar_promedio(
             stats_away["goals"]["against"]["average"]["away"]
         )
 
         forma_home = obtener_forma_reciente(
-            home_id
+            home_id,
+            league_id,
+            season,
+            venue="home"
         )
 
         forma_away = obtener_forma_reciente(
-            away_id
+            away_id,
+            league_id,
+            season,
+            venue="away"
         )
 
         if not forma_home or not forma_away:
@@ -531,9 +563,14 @@ def calcular_lambdas(p):
             lam_local = atk_home_temp * max(def_away_temp, 0.5)
             lam_visit = atk_away_temp * max(def_home_temp, 0.5)
 
+            lam_local, lam_visit = normalizar_lambdas(
+                lam_local,
+                lam_visit
+            )
+
             return (
-                min(lam_local, 4),
-                min(lam_visit, 4)
+                min(lam_local, 3.2),
+                min(lam_visit, 3.2)
             )
 
         atk_home = (
@@ -559,15 +596,24 @@ def calcular_lambdas(p):
         lam_local = atk_home * max(def_away, 0.5)
         lam_visit = atk_away * max(def_home, 0.5)
 
+        lam_local, lam_visit = normalizar_lambdas(
+            lam_local,
+            lam_visit
+        )
+
         print(
             f"📈 Forma reciente aplicada "
             f"| Home GF: {round(forma_home['gf'],2)} "
-            f"| Away GF: {round(forma_away['gf'],2)}"
+            f"| Home GC: {round(forma_home['gc'],2)} "
+            f"| Home PJ: {forma_home['partidos']} "
+            f"| Away GF: {round(forma_away['gf'],2)} "
+            f"| Away GC: {round(forma_away['gc'],2)} "
+            f"| Away PJ: {forma_away['partidos']}"
         )
 
         return (
-            min(lam_local, 4),
-            min(lam_visit, 4)
+            min(lam_local, 3.2),
+            min(lam_visit, 3.2)
         )
 
     except Exception as e:
@@ -819,6 +865,32 @@ def main():
                                     + total_lambda
                                 )
 
+                                # ==============================
+                                # PROTECCIÓN OVER 2.5 CUOTA BAJA
+                                # ==============================
+
+                                if odd < 1.55:
+
+                                    if nivel_liga == "TOP" and prob_o < 0.68:
+                                        print(
+                                            f"⛔ Over 2.5 descartado por cuota baja sin probabilidad premium "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_o,2)} "
+                                            f"| Prob mínima premium: 0.68"
+                                        )
+                                        continue
+
+                                    if nivel_liga == "MEDIA" and prob_o < 0.70:
+                                        print(
+                                            f"⛔ Over 2.5 descartado por cuota baja sin probabilidad premium "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_o,2)} "
+                                            f"| Prob mínima premium: 0.70"
+                                        )
+                                        continue
+
                                 if (
                                     val > filtros["min_value"]
                                     and prob_o > filtros["min_prob"]
@@ -910,6 +982,51 @@ def main():
                                     + total_lambda
                                 )
 
+                                # ==============================
+                                # PROTECCIÓN BTTS EQUILIBRIO
+                                # ==============================
+
+                                if lamL < 0.95 or lamV < 0.95:
+                                    print(
+                                        f"⛔ BTTS descartado por lambda individual baja "
+                                        f"| Local: {round(lamL,2)} "
+                                        f"| Visitante: {round(lamV,2)} "
+                                        f"| Mínimo: 0.95"
+                                    )
+                                    continue
+
+                                if abs(lamL - lamV) > 1.35:
+                                    print(
+                                        f"⛔ BTTS descartado por desequilibrio de lambdas "
+                                        f"| Local: {round(lamL,2)} "
+                                        f"| Visitante: {round(lamV,2)} "
+                                        f"| Diferencia: {round(abs(lamL - lamV),2)} "
+                                        f"| Máximo: 1.35"
+                                    )
+                                    continue
+
+                                if odd < 1.65:
+
+                                    if nivel_liga == "TOP" and prob_b < 0.68:
+                                        print(
+                                            f"⛔ BTTS descartado por cuota baja sin probabilidad premium "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_b,2)} "
+                                            f"| Prob mínima premium: 0.68"
+                                        )
+                                        continue
+
+                                    if nivel_liga == "MEDIA" and prob_b < 0.70:
+                                        print(
+                                            f"⛔ BTTS descartado por cuota baja sin probabilidad premium "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_b,2)} "
+                                            f"| Prob mínima premium: 0.70"
+                                        )
+                                        continue
+
                                 if (
                                     val > filtros["min_value"]
                                     and prob_b > filtros["min_prob"]
@@ -972,7 +1089,7 @@ def main():
                                 continue
 
             # ==============================
-            # SOLO MEJOR PICK
+            # SOLO MEJOR PICK POR PARTIDO
             # ==============================
 
             if picks_partido:
@@ -1083,7 +1200,7 @@ def main():
 
         reverse=True
 
-    )[:8]
+    )[:12]
 
     print(
         f"🔥 Picks finales: {len(picks)}"

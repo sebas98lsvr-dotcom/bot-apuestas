@@ -40,24 +40,35 @@ def obtener_stats_equipo(team_id, league_id, season):
         )
 
         if r.status_code != 200:
+            print(
+                f"⚠️ Error stats equipo "
+                f"| Team: {team_id} "
+                f"| League: {league_id} "
+                f"| Season: {season} "
+                f"| Status: {r.status_code}"
+            )
             return None
 
         return r.json().get("response", {})
 
-    except:
+    except Exception as e:
+
+        print("❌ Error obtener_stats_equipo:", e)
         return None
 
 # ==============================
-# FORMA RECIENTE
+# FORMA RECIENTE FILTRADA
 # ==============================
 
-def obtener_forma_reciente(team_id):
+def obtener_forma_reciente(team_id, league_id, season, venue=None):
 
     try:
 
         params = {
             "team": team_id,
-            "last": 5
+            "league": league_id,
+            "season": season,
+            "last": 10
         }
 
         r = requests.get(
@@ -68,11 +79,24 @@ def obtener_forma_reciente(team_id):
         )
 
         if r.status_code != 200:
+            print(
+                f"⚠️ Error forma reciente "
+                f"| Team: {team_id} "
+                f"| League: {league_id} "
+                f"| Season: {season} "
+                f"| Status: {r.status_code}"
+            )
             return None
 
         data = r.json().get("response", [])
 
         if not data:
+            print(
+                f"⚠️ Sin partidos recientes "
+                f"| Team: {team_id} "
+                f"| League: {league_id} "
+                f"| Season: {season}"
+            )
             return None
 
         goles_favor = 0
@@ -81,35 +105,60 @@ def obtener_forma_reciente(team_id):
 
         for p in data:
 
-            home_id = p["teams"]["home"]["id"]
-            away_id = p["teams"]["away"]["id"]
+            status = p.get("fixture", {}).get("status", {}).get("short")
 
-            goles_home = p["goals"]["home"]
-            goles_away = p["goals"]["away"]
+            if status != "FT":
+                continue
+
+            home_id = p.get("teams", {}).get("home", {}).get("id")
+            away_id = p.get("teams", {}).get("away", {}).get("id")
+
+            goles_home = p.get("goals", {}).get("home")
+            goles_away = p.get("goals", {}).get("away")
 
             if goles_home is None or goles_away is None:
                 continue
 
-            if team_id == home_id:
+            es_local = team_id == home_id
+            es_visitante = team_id == away_id
+
+            if venue == "home" and not es_local:
+                continue
+
+            if venue == "away" and not es_visitante:
+                continue
+
+            if es_local:
 
                 goles_favor += goles_home
                 goles_contra += goles_away
 
-            else:
+            elif es_visitante:
 
                 goles_favor += goles_away
                 goles_contra += goles_home
 
+            else:
+                continue
+
             partidos += 1
 
-        if partidos == 0:
+        if partidos < 3:
+            print(
+                f"⚠️ Forma reciente insuficiente "
+                f"| Team: {team_id} "
+                f"| Venue: {venue} "
+                f"| Partidos válidos: {partidos}"
+            )
             return None
 
         return {
-
             "gf": goles_favor / partidos,
-            "gc": goles_contra / partidos
+            "gc": goles_contra / partidos,
+            "partidos": partidos
         }
 
-    except:
+    except Exception as e:
+
+        print("❌ Error obtener_forma_reciente:", e)
         return None
