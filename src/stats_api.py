@@ -2,6 +2,10 @@ import requests
 import os
 from dotenv import load_dotenv
 
+# ==============================
+# ENV
+# ==============================
+
 ruta_env = os.path.join(
     os.path.dirname(__file__),
     "..",
@@ -56,6 +60,7 @@ def obtener_stats_equipo(team_id, league_id, season):
         print("❌ Error obtener_stats_equipo:", e)
         return None
 
+
 # ==============================
 # FORMA RECIENTE FILTRADA
 # ==============================
@@ -64,11 +69,13 @@ def obtener_forma_reciente(team_id, league_id, season, venue=None):
 
     try:
 
+        # Pedimos 15 para que después de filtrar local/visitante
+        # no quedemos con solo 2 o 3 partidos tan fácil.
         params = {
             "team": team_id,
             "league": league_id,
             "season": season,
-            "last": 10
+            "last": 15
         }
 
         r = requests.get(
@@ -101,7 +108,17 @@ def obtener_forma_reciente(team_id, league_id, season, venue=None):
 
         goles_favor = 0
         goles_contra = 0
+        goles_totales = 0
         partidos = 0
+
+        over15 = 0
+        over25 = 0
+        under25 = 0
+        btts = 0
+        clean_sheets = 0
+        failed_to_score = 0
+
+        resultados = []
 
         for p in data:
 
@@ -130,18 +147,47 @@ def obtener_forma_reciente(team_id, league_id, season, venue=None):
 
             if es_local:
 
-                goles_favor += goles_home
-                goles_contra += goles_away
+                gf = goles_home
+                gc = goles_away
 
             elif es_visitante:
 
-                goles_favor += goles_away
-                goles_contra += goles_home
+                gf = goles_away
+                gc = goles_home
 
             else:
                 continue
 
+            total = gf + gc
+
+            goles_favor += gf
+            goles_contra += gc
+            goles_totales += total
             partidos += 1
+
+            if total > 1.5:
+                over15 += 1
+
+            if total > 2.5:
+                over25 += 1
+            else:
+                under25 += 1
+
+            if gf > 0 and gc > 0:
+                btts += 1
+
+            if gc == 0:
+                clean_sheets += 1
+
+            if gf == 0:
+                failed_to_score += 1
+
+            resultados.append({
+                "gf": gf,
+                "gc": gc,
+                "total": total,
+                "marcador": f"{gf}-{gc}"
+            })
 
         if partidos < 3:
             print(
@@ -155,7 +201,15 @@ def obtener_forma_reciente(team_id, league_id, season, venue=None):
         return {
             "gf": goles_favor / partidos,
             "gc": goles_contra / partidos,
-            "partidos": partidos
+            "avg_total_goals": goles_totales / partidos,
+            "partidos": partidos,
+            "over15": over15,
+            "over25": over25,
+            "under25": under25,
+            "btts": btts,
+            "clean_sheets": clean_sheets,
+            "failed_to_score": failed_to_score,
+            "resultados": resultados
         }
 
     except Exception as e:

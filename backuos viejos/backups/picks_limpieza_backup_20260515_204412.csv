@@ -1,0 +1,38 @@
+fecha,fixture_id,partido,liga,mercado,odd,prob,value,score,stake,resultado,profit,notificado,resultado_notificado
+2026-05-08 17:20:18.366623,1492254,Fluminense vs Vitoria,Serie A,Over 2.5,2.0,0.85,0.17,,30.0,win,30.0,si,si
+2026-05-08 17:20:18.366630,1391168,Sevilla vs Espanyol,La Liga,Over 2.5,2.34,0.7,0.16,,30.0,win,40.2,si,si
+2026-05-08 17:33:09.292796,1542378,Real Cartagena vs Union Magdalena,Primera B,Over 2.5,2.05,0.81,0.17,,30.0,win,31.5,si,si
+2026-05-08 17:33:09.292829,1542378,Real Cartagena vs Union Magdalena,Primera B,BTTS,1.75,0.78,0.09,,30.0,win,22.5,si,si
+2026-05-08 17:40:00.000000,1493001,Bahia vs Cruzeiro,Brasileirao,Over 2.5,2.07,0.85,0.19,,30.0,win,32.1,si,si
+2026-05-08 17:40:00.000002,1493010,Atletico-MG vs Botafogo,Brasileirao,Over 2.5,2.0,0.85,0.17,,30.0,loss,-30.0,si,si
+2026-05-11 12:37:50.809255,1391614,Oleksandria vs Zorya Luhansk,Premier League,Over 2.5,1.96,0.78,0.13,1-2,30.0,win,28.8,si,si
+2026-05-11 12:37:50.809289,1544227,Atletico Nacional vs Internacional de Bogota,Primera A,Over 2.5,1.8,0.83,0.12,7-1,30.0,win,24.0,si,si
+2026-05-11 12:37:50.809304,1391170,Real Betis vs Elche,La Liga,Over 2.5,1.73,0.85,0.12,2-1,30.0,win,21.9,si,si
+2026-05-11 12:37:50.809313,1391171,Celta Vigo vs Levante,La Liga,Over 2.5,1.86,0.77,0.11,2-3,30.0,win,25.8,si,si
+2026-05-11 12:37:50.809321,1391615,Epitsentr Dunayivtsi vs Polessya,Premier League,Over 2.5,1.9,0.75,0.11,3-2,30.0,win,27.0,si,si
+2026-05-11 12:37:50.809328,1391175,Osasuna vs Atletico Madrid,La Liga,BTTS,1.88,0.68,0.07,1-2,30.0,win,26.4,si,si
+2026-05-11 12:37:50.809336,1391171,Celta Vigo vs Levante,La Liga,BTTS,1.75,0.72,0.06,2-3,30.0,win,22.5,si,si
+2026-05-13 17:00,1391178,Villarreal vs Sevilla,La Liga,Over 2.5,1.91,0.85,0.16,2-3,30.0,win,27.3,si,si
+2026-05-22 22:00,1544849,Belgrano Cordoba vs Union Santa Fe,Liga Profesional Argentina,Over 2.5,2.62,0.63,0.16,2-0,30.0,loss,-30.0,si,si
+2026-05-13 17:00,1391172,Espanyol vs Athletic Club,La Liga,Over 2.5,2.25,0.67,0.13,2-0,30.0,loss,-30.0,si,si
+2026-05-14 18:00,1391174,Girona vs Real Sociedad,La Liga,Over 2.5,1.82,0.72,0.07,1-1,30.0,loss,-30.0,si,si
+2026-05-15 08:00,1544526,Al Ittihad vs Shorta,Premier League,Over 2.5,1.67,0.85,0.1,4-0,30.0,win,20.1,si,si
+2026-05-15 11:45,1525867,FC Minsk vs Belshina,Premier League,Over 2.5,2.19,0.63,0.1,5-1,30.0,win,35.7,si,si
+2026-05-15 15:00,1512610,FC Cajamarca vs Sporting Cristal,Primera División,Over 2.5,1.95,0.85,0.16,29.68,30.0,pendiente,0,sii,no
+2026-05-15 13:15,1491445,Étoile Carouge vs Bellinzona,Challenge League,Over 2.5,1.62,0.85,0.09,22.84,30.0,pendiente,0,si,no
+2026-05-15 10:45,1380370,Nyiregyhaza vs Kazincbarcikai,NB I,BTTS,1.75,0.79,0.1,2-2,30.0,win,22.5,si,si
+2026-05-15 13:15,1491448,FC WIL 1900 vs FC Vaduz,Challenge League,Over 2.5,1.65,0.81,0.08,20.85,30.0,pendiente,0,si,no
+2026-05-15 13:00,1398270,Maritimo vs Chaves,Segunda Liga,Over 2.5,1.95,0.72,0.1,1-3,30.0,win,28.5,si,si
+2026-05-15 14:00,1379330,Aston Villa vs Liverpool,Premier League,Over 2.5,1.57,0.82,0.07,20.07,30.0,pendiente,0,si,no
+2026-05-16 13:00,1540319,FK Spartak Zdrepceva KRV vs IMT Novi Beograd,Super Liga,Over 2.5,2.15,0.79,0.17,29.5,30.0,pendiente,0,no,no
+2026-05-16 15:15,1512611,Juan Pablo II College vs Alianza Atletico,Primera División,Over 2.5,2.08,0.79,0.16,28.2,30.0,pendiente,0,no,no
+2026-05-16 17:00,1492266,Fluminense vs Sao Paulo,Serie A,Over 2.5,2.1,0.77,0.15,26.88,30.0,pendiente,0,no,no
+2026-05-16 10:00,1531285,FC BW Linz vs Grazer AK,Bundesliga,Over 2.5,2.05,0.78,0.15,26.67,30.0,pendiente,0,no,no
+2026-05-15 19:00,1505442,Palestino vs D. La Serena,Primera División,Over 2.5,2.0,0.79,0.14,26.6,30.0,pendiente,0,no,no
+2026-05-16 08:00,1494172,Halmstad vs IF Elfsborg,Allsvenskan,Over 2.5,2.08,0.75,0.14,25.54,30.0,pendiente,0,no,no
+2026-05-16 12:00,1396534,Arouca vs Tondela,Primeira Liga,Over 2.5,1.9,0.79,0.12,24.6,30.0,pendiente,0,no,no
+2026-05-16 11:30,1392194,Granada CF vs Burgos,Segunda División,Over 2.5,2.6,0.61,0.15,23.85,30.0,pendiente,0,no,no
+2026-05-16 17:30,1545164,River Plate vs Rosario Central,Liga Profesional Argentina,Over 2.5,2.52,0.62,0.14,23.39,30.0,pendiente,0,no,no
+2026-05-16 12:00,1396535,SC Braga vs Estrela,Primeira Liga,Over 2.5,1.82,0.78,0.1,22.28,30.0,pendiente,0,no,no
+2026-05-16 18:30,1490300,New England Revolution vs Minnesota United FC,Major League Soccer,Over 2.5,1.78,0.79,0.1,22.2,30.0,pendiente,0,no,no
+2026-05-16 06:30,1540034,Hibernian vs Motherwell,Premiership,Over 2.5,1.91,0.75,0.11,22.09,30.0,pendiente,0,no,no

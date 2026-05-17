@@ -6,7 +6,12 @@ from dotenv import load_dotenv
 # CARGAR ENV
 # =========================
 
-ruta_env = os.path.join(os.path.dirname(__file__), "..", ".env")
+ruta_env = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    ".env"
+)
+
 load_dotenv(ruta_env)
 
 API_KEY = os.getenv("API_FOOTBALL_KEY")
@@ -23,7 +28,6 @@ BASE_URL = "https://v3.football.api-sports.io"
 
 BOOKMAKERS_VALIDOS = [
     "Bet365",
-    "1xBet",
     "Betano",
     "Bwin",
     "William Hill"
@@ -39,10 +43,11 @@ def odd_valida(odd):
 
         odd = float(odd)
 
-        # evitar cuotas absurdas
+        # Evitar cuotas absurdas o mercados muy raros
         return 1.20 <= odd <= 8
 
-    except:
+    except Exception:
+
         return False
 
 # =========================
@@ -67,9 +72,19 @@ def obtener_odds(fixture_id):
         )
 
         if r.status_code != 200:
+
+            print(
+                f"⚠️ Error obteniendo odds "
+                f"| Fixture: {fixture_id} "
+                f"| Status: {r.status_code}"
+            )
+
             return []
 
-        data = r.json().get("response", [])
+        data = r.json().get(
+            "response",
+            []
+        )
 
         odds_limpias = []
 
@@ -91,7 +106,7 @@ def obtener_odds(fixture_id):
                     ""
                 )
 
-                # ignorar books raras
+                # Ignorar books no confiables para evitar value inflado
                 if nombre_book not in BOOKMAKERS_VALIDOS:
                     continue
 
@@ -113,24 +128,39 @@ def obtener_odds(fixture_id):
 
                     for v in valores:
 
-                        odd = v.get("odd")
+                        odd = v.get(
+                            "odd"
+                        )
 
                         if not odd_valida(odd):
                             continue
 
-                        valores_validos.append(v)
+                        valores_validos.append(
+                            v
+                        )
 
-                    # ignorar mercado vacío
+                    # Ignorar mercado vacío
                     if valores_validos:
 
-                        bet["values"] = valores_validos
-                        bets_limpias.append(bet)
+                        bet_limpio = {
+                            "id": bet.get("id"),
+                            "name": bet.get("name"),
+                            "bookmaker": nombre_book,
+                            "values": valores_validos
+                        }
 
-                # ignorar bookmaker vacío
+                        bets_limpias.append(
+                            bet_limpio
+                        )
+
+                # Ignorar bookmaker vacío
                 if bets_limpias:
 
-                    book["bets"] = bets_limpias
-                    odds_limpias.append(book)
+                    odds_limpias.append({
+                        "id": book.get("id"),
+                        "name": nombre_book,
+                        "bets": bets_limpias
+                    })
 
         print(
             f"💰 Odds válidas: {len(odds_limpias)}"

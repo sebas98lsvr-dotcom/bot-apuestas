@@ -1,37 +1,281 @@
-import requests
-import csv
 import os
-import tempfile
-import shutil
+import csv
+import requests
+from dotenv import load_dotenv
 
-# =========================
-# TELEGRAM
-# =========================
+# ==============================
+# CARGAR ENV
+# ==============================
 
-TOKEN = "8393109030:AAGLfsuMveQXITjYSF8JJdmvs1-7AuLiq_E"
-CHAT_ID = "-1003902179873"
+ruta_env = os.path.join(
+    os.path.dirname(__file__),
+    ".env"
+)
 
-# =========================
+load_dotenv(ruta_env)
+
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+# ==============================
 # RUTAS
-# =========================
+# ==============================
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PICKS_PATH = os.path.join(BASE_DIR, "picks.csv")
+RUTA_PICKS = os.path.join(
+    os.path.dirname(__file__),
+    "picks.csv"
+)
 
-# =========================
-# ENVIAR MENSAJE
-# =========================
+# ==============================
+# VALIDAR CONFIG TELEGRAM
+# ==============================
 
-def enviar_mensaje(texto):
+def telegram_config_ok():
+
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        print("❌ TELEGRAM_TOKEN o TELEGRAM_CHAT_ID no están configurados en .env")
+        return False
+
+    return True
+
+# ==============================
+# CONVERTIR FLOAT SEGURO
+# ==============================
+
+def to_float(valor, default=0):
 
     try:
 
-        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+        if valor is None:
+            return default
 
-        data = {
-            "chat_id": CHAT_ID,
-            "text": texto
-        }
+        valor = str(valor).replace(",", ".").strip()
+
+        if valor == "":
+            return default
+
+        return float(valor)
+
+    except Exception:
+
+        return default
+
+# ==============================
+# VALIDAR PICK ENVIABLE
+# ==============================
+
+def pick_es_enviable(row):
+
+    mercado = str(
+        row.get("mercado", "")
+    ).strip()
+
+    partido = str(
+        row.get("partido", "")
+    ).strip()
+
+    score = to_float(
+        row.get("score", 0)
+    )
+
+    odd = to_float(
+        row.get("odd", 0)
+    )
+
+    prob = to_float(
+        row.get("prob", 0)
+    )
+
+    value = to_float(
+        row.get("value", 0)
+    )
+
+    notificado = str(
+        row.get("notificado", "")
+    ).strip().lower()
+
+    resultado = str(
+        row.get("resultado", "")
+    ).strip().lower()
+
+    contexto = str(
+        row.get("contexto", "")
+    ).strip()
+
+    # ==============================
+    # YA NOTIFICADO
+    # ==============================
+
+    if notificado == "si":
+        return False, "Pick ya notificada"
+
+    # ==============================
+    # SOLO PENDIENTES
+    # ==============================
+
+    if resultado != "pendiente":
+        return False, f"Resultado no pendiente: {resultado}"
+
+    # ==============================
+    # MERCADOS ACTIVOS
+    # ==============================
+
+    if mercado not in ["Over 1.5", "Over 2.5", "BTTS"]:
+        return False, f"Mercado desactivado temporalmente: {mercado}"
+
+    # ==============================
+    # VALIDACIONES GENERALES
+    # ==============================
+
+    if partido == "":
+        return False, "Partido vacío"
+
+    if odd <= 1.20:
+        return False, f"Odd demasiado baja: {odd}"
+
+    if prob <= 0:
+        return False, f"Probabilidad inválida: {prob}"
+
+    if value <= 0:
+        return False, f"Value inválido: {value}"
+
+    if score <= 0:
+        return False, f"Score inválido: {score}"
+
+    # ==============================
+    # FILTROS OVER 2.5
+    # ==============================
+
+    if mercado == "Over 2.5":
+
+        if score < 25:
+            return False, f"Over 2.5 con score menor a 25: {score}"
+
+        if odd < 1.60:
+            return False, f"Over 2.5 con odd baja: {odd}"
+
+        if prob < 0.70:
+            return False, f"Over 2.5 con probabilidad menor a 0.70: {prob}"
+
+        if "OK Over25" not in contexto:
+            return False, "Over 2.5 sin contexto OK Over25"
+
+    # ==============================
+    # FILTROS OVER 1.5
+    # ==============================
+
+    if mercado == "Over 1.5":
+
+        if score < 19:
+            return False, f"Over 1.5 con score menor a 19: {score}"
+
+        if odd < 1.30:
+            return False, f"Over 1.5 con odd demasiado baja: {odd}"
+
+        if prob < 0.88:
+            return False, f"Over 1.5 con probabilidad menor a 0.88: {prob}"
+
+        if "OK Over15" not in contexto:
+            return False, "Over 1.5 sin contexto OK Over15"
+
+    # ==============================
+    # FILTROS BTTS EXIGENTES
+    # ==============================
+
+    if mercado == "BTTS":
+
+        # Score mínimo fuerte
+        if score < 23:
+            return False, f"BTTS con score menor a 23: {score}"
+
+        # Odd mínima para que valga la pena
+        if odd < 1.65:
+            return False, f"BTTS con odd menor a 1.65: {odd}"
+
+        # Evitar cuotas demasiado altas/riesgosas
+        if odd > 2.35:
+            return False, f"BTTS con odd demasiado alta: {odd}"
+
+        # Probabilidad mínima exigente
+        if prob < 0.64:
+            return False, f"BTTS con probabilidad menor a 0.64: {prob}"
+
+        # Value mínimo real
+        if value < 0.04:
+            return False, f"BTTS con value menor a 0.04: {value}"
+
+        # Debe venir aprobado desde main.py por contexto
+        if "OK BTTS" not in contexto:
+            return False, "BTTS sin contexto OK BTTS"
+
+        # Seguridad extra:
+        # si el contexto no trae señales de goles a favor/contra,
+        # mejor no enviarlo.
+        if "Home GF" not in contexto or "Away GF" not in contexto:
+            return False, "BTTS sin datos GF en contexto"
+
+        if "Home GC" not in contexto or "Away GC" not in contexto:
+            return False, "BTTS sin datos GC en contexto"
+
+    return True, "OK"
+
+# ==============================
+# FORMATEAR MENSAJE
+# ==============================
+
+def formatear_mensaje(picks):
+
+    mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
+
+    for p in picks:
+
+        fecha = p.get("fecha", "")
+        partido = p.get("partido", "")
+        liga = p.get("liga", "")
+        mercado = p.get("mercado", "")
+        odd = p.get("odd", "")
+        prob = p.get("prob", "")
+        value = p.get("value", "")
+        score = p.get("score", "")
+        stake = p.get("stake", "")
+        contexto = p.get("contexto", "")
+
+        mensaje += "🔥 PICK TOP 🔥\n"
+        mensaje += f"⚽ {partido}\n"
+        mensaje += f"🏆 {liga}\n"
+        mensaje += f"📅 Partido: {fecha}\n"
+        mensaje += f"🎯 Mercado: {mercado}\n"
+        mensaje += f"💰 Odd: {odd}\n"
+        mensaje += f"📊 Prob: {prob}\n"
+        mensaje += f"📈 Value: {value}\n"
+        mensaje += f"⭐ Score: {score}\n"
+        mensaje += f"💵 Stake sugerido: {stake}\n"
+
+        if contexto:
+            mensaje += f"🧠 Contexto: {contexto}\n"
+
+        mensaje += "\n"
+
+    mensaje += "⚠️ Apuesta con gestión de bank. No es garantía de resultado."
+
+    return mensaje
+
+# ==============================
+# ENVIAR MENSAJE TELEGRAM
+# ==============================
+
+def enviar_mensaje_telegram(mensaje):
+
+    url = (
+        f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    )
+
+    data = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": mensaje
+    }
+
+    try:
 
         r = requests.post(
             url,
@@ -39,262 +283,147 @@ def enviar_mensaje(texto):
             timeout=20
         )
 
-        print(r.text)
+        print("📨 Telegram status:", r.status_code)
 
-        if r.status_code == 200:
-
-            print("✅ Telegram enviado")
-            return True
-
-        else:
-
-            print("❌ Error Telegram")
+        if r.status_code != 200:
+            print("❌ Respuesta Telegram:", r.text)
             return False
+
+        return True
 
     except Exception as e:
 
         print("❌ Error enviando Telegram:", e)
         return False
 
+# ==============================
+# LEER PICKS
+# ==============================
 
-# =========================
-# NORMALIZAR TEXTO
-# =========================
+def leer_picks():
 
-def normalizar(valor):
+    if not os.path.exists(RUTA_PICKS):
+        print("⚠️ No existe picks.csv")
+        return []
 
-    if valor is None:
-        return ""
+    with open(
+        RUTA_PICKS,
+        newline="",
+        encoding="utf-8"
+    ) as f:
 
-    return str(valor).strip().lower()
+        reader = csv.DictReader(f)
 
+        return list(reader)
 
-# =========================
-# CONVERTIR A FLOAT SEGURO
-# =========================
+# ==============================
+# GUARDAR PICKS ACTUALIZADAS
+# ==============================
 
-def to_float(valor, default=0.0):
+def guardar_picks(rows, fieldnames):
 
-    try:
+    with open(
+        RUTA_PICKS,
+        "w",
+        newline="",
+        encoding="utf-8"
+    ) as f:
 
-        if valor is None:
-            return default
-
-        valor = str(valor).strip()
-
-        if valor == "":
-            return default
-
-        return float(valor)
-
-    except:
-
-        return default
-
-
-# =========================
-# CREAR ID UNICO DE PICK
-# =========================
-
-def pick_key(row):
-
-    return (
-        str(row.get("fixture_id", "")).strip(),
-        str(row.get("partido", "")).strip(),
-        str(row.get("mercado", "")).strip(),
-        str(row.get("odd", "")).strip()
-    )
-
-
-# =========================
-# GUARDAR CSV SEGURO
-# =========================
-
-def guardar_csv_seguro(rows, fieldnames):
-
-    carpeta = os.path.dirname(PICKS_PATH)
-
-    fd, temp_path = tempfile.mkstemp(
-        dir=carpeta,
-        suffix=".csv"
-    )
-
-    os.close(fd)
-
-    try:
-
-        with open(
-            temp_path,
-            "w",
-            newline="",
-            encoding="utf-8"
-        ) as f:
-
-            writer = csv.DictWriter(
-                f,
-                fieldnames=fieldnames,
-                extrasaction="ignore"
-            )
-
-            writer.writeheader()
-            writer.writerows(rows)
-
-        shutil.move(temp_path, PICKS_PATH)
-
-    except Exception as e:
-
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-        raise e
-
-
-# =========================
-# ENVIAR PICKS
-# =========================
-
-def enviar_picks():
-
-    try:
-
-        if not os.path.exists(PICKS_PATH):
-
-            print("❌ No existe picks.csv")
-            return
-
-        with open(
-            PICKS_PATH,
-            newline="",
-            encoding="utf-8"
-        ) as f:
-
-            reader = csv.DictReader(f)
-            fieldnames = reader.fieldnames or []
-            rows = list(reader)
-
-        if not rows:
-
-            print("⚠️ picks.csv está vacío")
-            return
-
-        # Asegurar columna notificado
-        if "notificado" not in fieldnames:
-            fieldnames.append("notificado")
-
-        picks_validas = []
-
-        for row in rows:
-
-            try:
-
-                odd = to_float(row.get("odd", 0))
-                score = to_float(row.get("score", 0))
-
-                resultado = normalizar(row.get("resultado", ""))
-                notificado = normalizar(row.get("notificado", ""))
-
-                # SOLO PICKS PENDIENTES
-                if resultado != "pendiente":
-                    continue
-
-                # NO REPETIR PICKS YA ENVIADAS
-                if notificado == "si":
-                    continue
-
-                # FILTRO DE SEGURIDAD COHERENTE CON MAIN.PY
-                # MAIN.PY YA FILTRA SCORE >= 18
-                if (
-                    odd > 0
-                    and score >= 18
-                ):
-
-                    picks_validas.append(row)
-
-            except Exception as e:
-
-                print("⚠️ Fila ignorada:", e)
-                continue
-
-        # =========================
-        # ORDENAR PICKS
-        # =========================
-
-        picks_validas = sorted(
-            picks_validas,
-            key=lambda x: to_float(x.get("score", 0)),
-            reverse=True
-        )[:10]
-
-        # =========================
-        # NO HAY PICKS NUEVAS
-        # =========================
-
-        if not picks_validas:
-
-            print("⚠️ No hay picks nuevas para enviar")
-            return
-
-        # =========================
-        # MENSAJE
-        # =========================
-
-        mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
-
-        for row in picks_validas:
-
-            mensaje += (
-                f"🔥 PICK TOP 🔥\n"
-                f"⚽ {row.get('partido', '-')}\n"
-                f"🏆 {row.get('liga', '-')}\n"
-                f"📅 Partido: {row.get('fecha', '-')[:16]}\n"
-                f"👉 {row.get('mercado', '-')}\n"
-                f"💰 Odds: {row.get('odd', '-')}\n"
-                f"📊 Prob: {row.get('prob', '-')}\n"
-                f"🔥 Value: {row.get('value', '-')}\n"
-                f"⭐ Score: {row.get('score', '-')}\n"
-                f"💵 Stake: {row.get('stake', '-')}\n\n"
-            )
-
-        print(f"📨 Picks nuevas a enviar: {len(picks_validas)}")
-
-        enviado = enviar_mensaje(mensaje)
-
-        if not enviado:
-
-            print("❌ No se marcaron como notificadas porque Telegram falló")
-            return
-
-        # =========================
-        # MARCAR COMO NOTIFICADAS
-        # =========================
-
-        keys_enviadas = set(
-            pick_key(row)
-            for row in picks_validas
+        writer = csv.DictWriter(
+            f,
+            fieldnames=fieldnames
         )
 
-        marcadas = 0
+        writer.writeheader()
 
         for row in rows:
+            writer.writerow(row)
 
-            if pick_key(row) in keys_enviadas:
+# ==============================
+# MAIN
+# ==============================
 
-                row["notificado"] = "si"
-                marcadas += 1
+def main():
 
-        guardar_csv_seguro(rows, fieldnames)
+    if not telegram_config_ok():
+        print("❌ No se marcarán picks como notificadas porque Telegram falló")
+        return
 
-        print(f"✅ Picks marcadas como notificadas: {marcadas}")
+    rows = leer_picks()
 
-    except Exception as e:
+    if not rows:
+        print("⚠️ No hay picks para revisar")
+        return
 
-        print("❌ ERROR GENERAL:", e)
+    fieldnames = list(rows[0].keys())
 
+    picks_enviables = []
 
-# =========================
+    for row in rows:
+
+        ok, razon = pick_es_enviable(row)
+
+        if ok:
+            picks_enviables.append(row)
+        else:
+            partido = row.get("partido", "")
+            mercado = row.get("mercado", "")
+            print(
+                f"⏭️ No enviada: {partido} | {mercado} | {razon}"
+            )
+
+    if not picks_enviables:
+        print("⚠️ No hay picks nuevas enviables")
+        return
+
+    mensaje = formatear_mensaje(
+        picks_enviables
+    )
+
+    enviado = enviar_mensaje_telegram(
+        mensaje
+    )
+
+    if not enviado:
+        print("❌ No se marcarán picks como notificadas porque Telegram falló")
+        return
+
+    ids_enviados = set()
+
+    for p in picks_enviables:
+
+        clave = (
+            str(p.get("fixture_id", ""))
+            + "_"
+            + str(p.get("mercado", ""))
+        )
+
+        ids_enviados.add(clave)
+
+    for row in rows:
+
+        clave = (
+            str(row.get("fixture_id", ""))
+            + "_"
+            + str(row.get("mercado", ""))
+        )
+
+        if clave in ids_enviados:
+            row["notificado"] = "si"
+
+    guardar_picks(
+        rows,
+        fieldnames
+    )
+
+    print(
+        f"✅ Picks enviadas y marcadas como notificadas: {len(picks_enviables)}"
+    )
+
+# ==============================
 # START
-# =========================
+# ==============================
 
 if __name__ == "__main__":
 
-    enviar_picks()
+    main()

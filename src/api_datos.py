@@ -3,11 +3,22 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    ZoneInfo = None
+    import pytz
+
 # =========================
 # CARGAR VARIABLES
 # =========================
 
-ruta_env = os.path.join(os.path.dirname(__file__), "..", ".env")
+ruta_env = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    ".env"
+)
+
 load_dotenv(ruta_env)
 
 API_KEY = os.getenv("API_FOOTBALL_KEY")
@@ -19,21 +30,109 @@ HEADERS = {
 BASE_URL = "https://v3.football.api-sports.io"
 
 # =========================
+# ZONA HORARIA COLOMBIA
+# =========================
+
+def ahora_colombia():
+
+    if ZoneInfo is not None:
+        return datetime.now(
+            ZoneInfo("America/Bogota")
+        )
+
+    zona = pytz.timezone(
+        "America/Bogota"
+    )
+
+    return datetime.now(
+        zona
+    )
+
+# =========================
+# CONVERTIR FECHA API A COLOMBIA
+# =========================
+
+def fecha_api_a_colombia(fecha_api):
+
+    try:
+
+        fecha_api = str(fecha_api).strip()
+
+        fecha_utc = datetime.fromisoformat(
+            fecha_api.replace("Z", "+00:00")
+        )
+
+        if fecha_utc.tzinfo is None:
+
+            if ZoneInfo is not None:
+                fecha_utc = fecha_utc.replace(
+                    tzinfo=ZoneInfo("UTC")
+                )
+            else:
+                fecha_utc = pytz.utc.localize(
+                    fecha_utc
+                )
+
+        if ZoneInfo is not None:
+
+            return fecha_utc.astimezone(
+                ZoneInfo("America/Bogota")
+            )
+
+        zona = pytz.timezone(
+            "America/Bogota"
+        )
+
+        return fecha_utc.astimezone(
+            zona
+        )
+
+    except Exception:
+
+        return None
+
+# =========================
 # LIGAS / PALABRAS A IGNORAR
 # =========================
 
 LIGAS_BLOQUEADAS = [
+
+    "U23",
     "U21",
     "U20",
     "U19",
     "U18",
+    "U17",
+    "U16",
+    "U15",
+
     "Women",
+    "Woman",
     "Fem",
+    "Femenino",
+    "Feminine",
+    "W League",
+
     "Reserve",
     "Reserves",
+    "Reservas",
     "Youth",
     "Juvenil",
-    "Friendly"
+    "Junior",
+    "Academy",
+    "Development",
+    "Primavera",
+
+    "Friendly",
+    "Friendlies",
+    "Amistoso",
+    "Club Friendlies",
+
+    "Amateur",
+    "Regional",
+    "County",
+    "State League",
+    "District"
 ]
 
 # =========================
@@ -41,13 +140,21 @@ LIGAS_BLOQUEADAS = [
 # =========================
 
 def liga_valida(nombre_liga):
-    nombre_liga = nombre_liga.lower()
 
-    for palabra in LIGAS_BLOQUEADAS:
-        if palabra.lower() in nombre_liga:
-            return False
+    try:
 
-    return True
+        nombre_liga = str(nombre_liga).lower()
+
+        for palabra in LIGAS_BLOQUEADAS:
+
+            if palabra.lower() in nombre_liga:
+                return False
+
+        return True
+
+    except Exception:
+
+        return False
 
 # =========================
 # OBTENER PARTIDOS
@@ -55,8 +162,11 @@ def liga_valida(nombre_liga):
 
 def obtener_partidos():
 
-    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-    fecha_manana = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    ahora = ahora_colombia()
+    limite = ahora + timedelta(hours=24)
+
+    fecha_hoy = ahora.strftime("%Y-%m-%d")
+    fecha_manana = (ahora + timedelta(days=1)).strftime("%Y-%m-%d")
 
     partidos = []
 
@@ -64,13 +174,18 @@ def obtener_partidos():
 
         print(f"\n📅 Buscando partidos: {fecha}")
 
-        url = f"{BASE_URL}/fixtures?date={fecha}"
+        url = f"{BASE_URL}/fixtures"
+
+        params = {
+            "date": fecha
+        }
 
         try:
 
             response = requests.get(
                 url,
                 headers=HEADERS,
+                params=params,
                 timeout=20
             )
 
@@ -106,16 +221,49 @@ def obtener_partidos():
 
                 try:
 
-                    liga = partido["league"]["name"]
+                    liga = partido.get("league", {}).get("name", "")
 
                     if not liga_valida(liga):
                         continue
 
-                    # Validar datos mínimos
                     if (
                         "teams" not in partido
                         or "fixture" not in partido
                     ):
+                        continue
+
+                    status = partido.get(
+                        "fixture",
+                        {}
+                    ).get(
+                        "status",
+                        {}
+                    ).get(
+                        "short",
+                        ""
+                    )
+
+                    if status != "NS":
+                        continue
+
+                    fecha_api = partido.get(
+                        "fixture",
+                        {}
+                    ).get(
+                        "date"
+                    )
+
+                    fecha_col = fecha_api_a_colombia(
+                        fecha_api
+                    )
+
+                    if fecha_col is None:
+                        continue
+
+                    if fecha_col < ahora:
+                        continue
+
+                    if fecha_col > limite:
                         continue
 
                     partidos.append(partido)
@@ -138,5 +286,10 @@ def obtener_partidos():
     )
 
     print(f"\n✅ TOTAL PARTIDOS VÁLIDOS: {len(partidos)}")
+    print(
+        f"🕒 Ventana usada Colombia: "
+        f"{ahora.strftime('%Y-%m-%d %H:%M')} "
+        f"hasta {limite.strftime('%Y-%m-%d %H:%M')}"
+    )
 
     return partidos

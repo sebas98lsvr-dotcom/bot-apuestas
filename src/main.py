@@ -144,7 +144,9 @@ def guardar(picks):
         "stake",
         "resultado",
         "profit",
-        "notificado"
+        "notificado",
+        "version_estrategia",
+        "contexto"
     ]
 
     with open(
@@ -178,7 +180,15 @@ def guardar(picks):
                 "stake": p["stake"],
                 "resultado": "pendiente",
                 "profit": 0,
-                "notificado": "no"
+                "notificado": "no",
+                "version_estrategia": p.get(
+                    "version_estrategia",
+                    "multi_market_context_v3"
+                ),
+                "contexto": p.get(
+                    "contexto",
+                    ""
+                )
             })
 
 # ==============================
@@ -352,64 +362,64 @@ def obtener_filtros_mercado(nivel_liga, mercado):
 
         if mercado == "Over 1.5":
             return {
-                "min_value": 0.04,
-                "min_prob": 0.78,
-                "min_lambda": 2.70,
-                "min_odd": 1.35,
-                "max_odd": 1.75,
-                "min_score": 20
+                "min_value": 0.035,
+                "min_prob": 0.76,
+                "min_lambda": 2.55,
+                "min_odd": 1.30,
+                "max_odd": 1.78,
+                "min_score": 19
             }
 
         if mercado == "Over 2.5":
             return {
                 "min_value": 0.025,
-                "min_prob": 0.58,
-                "min_lambda": 2.60,
-                "min_odd": 1.45,
-                "max_odd": 2.90,
-                "min_score": 18
+                "min_prob": 0.60,
+                "min_lambda": 2.70,
+                "min_odd": 1.55,
+                "max_odd": 2.70,
+                "min_score": 23
             }
 
         if mercado == "BTTS":
             return {
-                "min_value": 0.03,
-                "min_prob": 0.53,
-                "min_lambda": 2.35,
-                "min_odd": 1.55,
-                "max_odd": 2.70,
-                "min_score": 18
+                "min_value": 0.04,
+                "min_prob": 0.60,
+                "min_lambda": 2.50,
+                "min_odd": 1.65,
+                "max_odd": 2.35,
+                "min_score": 23
             }
 
     if nivel_liga == "MEDIA":
 
         if mercado == "Over 1.5":
             return {
-                "min_value": 0.05,
-                "min_prob": 0.82,
-                "min_lambda": 2.90,
-                "min_odd": 1.40,
-                "max_odd": 1.75,
-                "min_score": 22
+                "min_value": 0.04,
+                "min_prob": 0.79,
+                "min_lambda": 2.70,
+                "min_odd": 1.35,
+                "max_odd": 1.78,
+                "min_score": 20
             }
 
         if mercado == "Over 2.5":
             return {
-                "min_value": 0.03,
-                "min_prob": 0.60,
-                "min_lambda": 2.75,
-                "min_odd": 1.45,
-                "max_odd": 2.90,
-                "min_score": 19
+                "min_value": 0.04,
+                "min_prob": 0.64,
+                "min_lambda": 2.95,
+                "min_odd": 1.60,
+                "max_odd": 2.55,
+                "min_score": 23
             }
 
         if mercado == "BTTS":
             return {
-                "min_value": 0.04,
-                "min_prob": 0.58,
-                "min_lambda": 2.55,
-                "min_odd": 1.55,
-                "max_odd": 2.70,
-                "min_score": 20
+                "min_value": 0.045,
+                "min_prob": 0.64,
+                "min_lambda": 2.70,
+                "min_odd": 1.70,
+                "max_odd": 2.30,
+                "min_score": 24
             }
 
     return None
@@ -485,6 +495,427 @@ def limpiar_promedio(valor, minimo=0.45):
         return minimo
 
 # ==============================
+# VALIDAR OVER 1.5 CONTEXTO
+# ==============================
+
+def validar_over15_contexto(
+    nivel_liga,
+    lamL,
+    lamV,
+    total_lambda,
+    prob_o15,
+    odd,
+    forma_home,
+    forma_away
+):
+
+    razones = []
+
+    if forma_home is None or forma_away is None:
+        razones.append(
+            "Sin forma reciente suficiente para validar Over 1.5"
+        )
+        return False, razones
+
+    home_pj = forma_home.get("partidos", 0)
+    away_pj = forma_away.get("partidos", 0)
+
+    home_avg_total = forma_home.get("avg_total_goals", 0)
+    away_avg_total = forma_away.get("avg_total_goals", 0)
+
+    home_gf = forma_home.get("gf", 0)
+    home_gc = forma_home.get("gc", 0)
+
+    away_gf = forma_away.get("gf", 0)
+    away_gc = forma_away.get("gc", 0)
+
+    home_failed_to_score = forma_home.get("failed_to_score", 0)
+    away_failed_to_score = forma_away.get("failed_to_score", 0)
+
+    home_clean_sheets = forma_home.get("clean_sheets", 0)
+    away_clean_sheets = forma_away.get("clean_sheets", 0)
+
+    home_under25 = forma_home.get("under25", 0)
+    away_under25 = forma_away.get("under25", 0)
+
+    if home_pj < 4 or away_pj < 4:
+        razones.append(
+            f"Muestra baja Over 1.5: home {home_pj}, away {away_pj}"
+        )
+
+    if total_lambda < 2.55:
+        razones.append(
+            f"Lambda baja para Over 1.5: {round(total_lambda,2)}"
+        )
+
+    if nivel_liga == "MEDIA" and total_lambda < 2.70:
+        razones.append(
+            f"Lambda baja para Over 1.5 en liga media: {round(total_lambda,2)}"
+        )
+
+    if prob_o15 < 0.76:
+        razones.append(
+            f"Probabilidad baja para Over 1.5: {round(prob_o15,2)}"
+        )
+
+    if nivel_liga == "MEDIA" and prob_o15 < 0.79:
+        razones.append(
+            f"Probabilidad baja para Over 1.5 en liga media: {round(prob_o15,2)}"
+        )
+
+    if home_avg_total < 2.00 and away_avg_total < 2.00:
+        razones.append(
+            f"Promedio reciente bajo para Over 1.5: home {round(home_avg_total,2)}, away {round(away_avg_total,2)}"
+        )
+
+    if home_gf < 0.85 and away_gf < 0.85:
+        razones.append(
+            f"Ambos equipos marcan poco: home GF {round(home_gf,2)}, away GF {round(away_gf,2)}"
+        )
+
+    if home_gc < 0.75 and away_gc < 0.75:
+        razones.append(
+            f"Ambos equipos reciben poco: home GC {round(home_gc,2)}, away GC {round(away_gc,2)}"
+        )
+
+    if home_failed_to_score >= max(3, home_pj // 2) and away_failed_to_score >= max(3, away_pj // 2):
+        razones.append(
+            f"Ambos se quedan mucho sin marcar: home {home_failed_to_score}/{home_pj}, away {away_failed_to_score}/{away_pj}"
+        )
+
+    if home_clean_sheets >= max(3, home_pj // 2) and away_clean_sheets >= max(3, away_pj // 2):
+        razones.append(
+            f"Ambos con muchas porterías en cero: home {home_clean_sheets}/{home_pj}, away {away_clean_sheets}/{away_pj}"
+        )
+
+    if home_under25 >= max(5, home_pj - 1) and away_under25 >= max(5, away_pj - 1):
+        razones.append(
+            f"Ambos muy under 2.5: home {home_under25}/{home_pj}, away {away_under25}/{away_pj}"
+        )
+
+    if odd < 1.30:
+        razones.append(
+            f"Odd demasiado baja para Over 1.5: {odd}"
+        )
+
+    if razones:
+        return False, razones
+
+    contexto = (
+        f"OK Over15 | "
+        f"Lambda {round(total_lambda,2)} | "
+        f"Prob {round(prob_o15,2)} | "
+        f"Home avg {round(home_avg_total,2)} | "
+        f"Away avg {round(away_avg_total,2)} | "
+        f"Home GF {round(home_gf,2)} | "
+        f"Away GF {round(away_gf,2)}"
+    )
+
+    return True, [contexto]
+
+# ==============================
+# VALIDAR OVER 2.5 CONTEXTO ESTRICTO
+# ==============================
+
+def validar_over25_contexto(
+    nivel_liga,
+    lamL,
+    lamV,
+    total_lambda,
+    prob_o,
+    odd,
+    forma_home,
+    forma_away
+):
+
+    razones = []
+
+    if forma_home is None or forma_away is None:
+        razones.append(
+            "Sin forma reciente suficiente para validar Over 2.5"
+        )
+        return False, razones
+
+    home_pj = forma_home.get("partidos", 0)
+    away_pj = forma_away.get("partidos", 0)
+
+    home_over25 = forma_home.get("over25", 0)
+    away_over25 = forma_away.get("over25", 0)
+
+    home_under25 = forma_home.get("under25", 0)
+    away_under25 = forma_away.get("under25", 0)
+
+    home_avg_total = forma_home.get("avg_total_goals", 0)
+    away_avg_total = forma_away.get("avg_total_goals", 0)
+
+    home_gf = forma_home.get("gf", 0)
+    home_gc = forma_home.get("gc", 0)
+
+    away_gf = forma_away.get("gf", 0)
+    away_gc = forma_away.get("gc", 0)
+
+    home_btts = forma_home.get("btts", 0)
+    away_btts = forma_away.get("btts", 0)
+
+    away_clean_sheets = forma_away.get("clean_sheets", 0)
+    away_failed_to_score = forma_away.get("failed_to_score", 0)
+
+    if home_pj < 4 or away_pj < 4:
+        razones.append(
+            f"Muestra baja: home {home_pj} partidos, away {away_pj} partidos"
+        )
+
+    if home_over25 <= 2 and away_over25 <= 2:
+        razones.append(
+            f"Ambos equipos con baja tendencia Over 2.5: home {home_over25}/{home_pj}, away {away_over25}/{away_pj}"
+        )
+
+    if home_over25 <= 2 and away_over25 <= 4 and total_lambda < 3.30:
+        razones.append(
+            f"Local muy under para Over 2.5 y lambda no premium: home {home_over25}/{home_pj}, away {away_over25}/{away_pj}, lambda {round(total_lambda,2)}"
+        )
+
+    if nivel_liga == "MEDIA":
+
+        if home_over25 <= 3 and away_over25 <= 3:
+            razones.append(
+                f"Liga media con tendencia Over 2.5 débil: home {home_over25}/{home_pj}, away {away_over25}/{away_pj}"
+            )
+
+        if total_lambda < 2.95:
+            razones.append(
+                f"Lambda justa para Over 2.5 en liga media: {round(total_lambda, 2)}"
+            )
+
+        if prob_o < 0.64:
+            razones.append(
+                f"Probabilidad baja para Over 2.5 en liga media: {round(prob_o, 2)}"
+            )
+
+    if home_avg_total < 2.30 and away_avg_total < 2.30:
+        razones.append(
+            f"Promedio reciente de goles bajo: home {round(home_avg_total,2)}, away {round(away_avg_total,2)}"
+        )
+
+    if away_gc <= 0.90 and away_over25 <= 3:
+        razones.append(
+            f"Visitante defensivo: GC away {round(away_gc,2)} y Over 2.5 {away_over25}/{away_pj}"
+        )
+
+    if away_clean_sheets >= max(2, away_pj // 2):
+        razones.append(
+            f"Visitante con muchas porterías en cero: {away_clean_sheets}/{away_pj}"
+        )
+
+    if lamV < 0.70:
+        razones.append(
+            f"Lambda visitante baja para Over 2.5: {round(lamV,2)}"
+        )
+
+    if away_gf < 0.85:
+        razones.append(
+            f"Visitante marca poco fuera: GF away {round(away_gf,2)}"
+        )
+
+    if away_failed_to_score >= max(2, away_pj // 2):
+        razones.append(
+            f"Visitante se queda mucho sin marcar: {away_failed_to_score}/{away_pj}"
+        )
+
+    if lamL >= 2.10 and lamV < 0.80:
+        razones.append(
+            f"Over 2.5 depende demasiado del local: lamL {round(lamL,2)}, lamV {round(lamV,2)}"
+        )
+
+    if home_btts <= 1 and away_btts <= 1:
+        razones.append(
+            f"BTTS reciente muy bajo: home {home_btts}/{home_pj}, away {away_btts}/{away_pj}"
+        )
+
+    if home_under25 >= max(3, home_pj - 1) and away_under25 >= max(3, away_pj - 1):
+        razones.append(
+            f"Ambos equipos con muchos Under 2.5: home {home_under25}/{home_pj}, away {away_under25}/{away_pj}"
+        )
+
+    if razones:
+        return False, razones
+
+    contexto = (
+        f"OK Over25 | "
+        f"Home O2.5 {home_over25}/{home_pj} | "
+        f"Away O2.5 {away_over25}/{away_pj} | "
+        f"Home avg {round(home_avg_total,2)} | "
+        f"Away avg {round(away_avg_total,2)} | "
+        f"Away GC {round(away_gc,2)}"
+    )
+
+    return True, [contexto]
+
+# ==============================
+# VALIDAR BTTS CONTEXTO ESTRICTO
+# ==============================
+
+def validar_btts_contexto(
+    nivel_liga,
+    lamL,
+    lamV,
+    total_lambda,
+    prob_b,
+    odd,
+    forma_home,
+    forma_away
+):
+
+    razones = []
+
+    if forma_home is None or forma_away is None:
+        razones.append(
+            "Sin forma reciente suficiente para validar BTTS"
+        )
+        return False, razones
+
+    home_pj = forma_home.get("partidos", 0)
+    away_pj = forma_away.get("partidos", 0)
+
+    home_btts = forma_home.get("btts", 0)
+    away_btts = forma_away.get("btts", 0)
+
+    home_gf = forma_home.get("gf", 0)
+    home_gc = forma_home.get("gc", 0)
+
+    away_gf = forma_away.get("gf", 0)
+    away_gc = forma_away.get("gc", 0)
+
+    home_avg_total = forma_home.get("avg_total_goals", 0)
+    away_avg_total = forma_away.get("avg_total_goals", 0)
+
+    home_clean_sheets = forma_home.get("clean_sheets", 0)
+    away_clean_sheets = forma_away.get("clean_sheets", 0)
+
+    home_failed_to_score = forma_home.get("failed_to_score", 0)
+    away_failed_to_score = forma_away.get("failed_to_score", 0)
+
+    if home_pj < 4 or away_pj < 4:
+        razones.append(
+            f"Muestra baja BTTS: home {home_pj} partidos, away {away_pj} partidos"
+        )
+
+    if lamL < 1.00:
+        razones.append(
+            f"Lambda local baja para BTTS: {round(lamL, 2)}"
+        )
+
+    if lamV < 1.00:
+        razones.append(
+            f"Lambda visitante baja para BTTS: {round(lamV, 2)}"
+        )
+
+    if total_lambda < 2.50:
+        razones.append(
+            f"Lambda total baja para BTTS: {round(total_lambda,2)}"
+        )
+
+    if nivel_liga == "MEDIA" and total_lambda < 2.70:
+        razones.append(
+            f"Lambda total baja para BTTS en liga media: {round(total_lambda,2)}"
+        )
+
+    if abs(lamL - lamV) > 1.20:
+        razones.append(
+            f"BTTS desbalanceado por lambdas: local {round(lamL,2)}, visitante {round(lamV,2)}"
+        )
+
+    if home_btts <= 2 and away_btts <= 2:
+        razones.append(
+            f"Ambos equipos con baja tendencia BTTS: home {home_btts}/{home_pj}, away {away_btts}/{away_pj}"
+        )
+
+    if nivel_liga == "MEDIA" and home_btts <= 3 and away_btts <= 3:
+        razones.append(
+            f"Liga media con BTTS débil: home {home_btts}/{home_pj}, away {away_btts}/{away_pj}"
+        )
+
+    if home_gf < 1.00:
+        razones.append(
+            f"Local marca poco en casa: GF home {round(home_gf,2)}"
+        )
+
+    if away_gf < 1.00:
+        razones.append(
+            f"Visitante marca poco fuera: GF away {round(away_gf,2)}"
+        )
+
+    if home_failed_to_score >= max(2, home_pj // 2):
+        razones.append(
+            f"Local se queda mucho sin marcar: {home_failed_to_score}/{home_pj}"
+        )
+
+    if away_failed_to_score >= max(2, away_pj // 2):
+        razones.append(
+            f"Visitante se queda mucho sin marcar: {away_failed_to_score}/{away_pj}"
+        )
+
+    if home_gc < 0.80:
+        razones.append(
+            f"Local recibe poco en casa: GC home {round(home_gc,2)}"
+        )
+
+    if away_gc < 0.80:
+        razones.append(
+            f"Visitante recibe poco fuera: GC away {round(away_gc,2)}"
+        )
+
+    if home_clean_sheets >= max(2, home_pj // 2):
+        razones.append(
+            f"Local con muchas porterías en cero: {home_clean_sheets}/{home_pj}"
+        )
+
+    if away_clean_sheets >= max(2, away_pj // 2):
+        razones.append(
+            f"Visitante con muchas porterías en cero: {away_clean_sheets}/{away_pj}"
+        )
+
+    if home_avg_total < 2.10 and away_avg_total < 2.10:
+        razones.append(
+            f"Promedio total bajo para BTTS: home {round(home_avg_total,2)}, away {round(away_avg_total,2)}"
+        )
+
+    if nivel_liga == "MEDIA" and prob_b < 0.64:
+        razones.append(
+            f"Probabilidad BTTS baja en liga media: {round(prob_b,2)}"
+        )
+
+    if nivel_liga == "TOP" and prob_b < 0.60:
+        razones.append(
+            f"Probabilidad BTTS baja en liga TOP: {round(prob_b,2)}"
+        )
+
+    if odd < 1.65:
+        razones.append(
+            f"Odd BTTS demasiado baja: {odd}"
+        )
+
+    if odd > 2.35:
+        razones.append(
+            f"Odd BTTS demasiado alta/riesgosa: {odd}"
+        )
+
+    if razones:
+        return False, razones
+
+    contexto = (
+        f"OK BTTS | "
+        f"Home BTTS {home_btts}/{home_pj} | "
+        f"Away BTTS {away_btts}/{away_pj} | "
+        f"Home GF {round(home_gf,2)} | "
+        f"Away GF {round(away_gf,2)} | "
+        f"Home GC {round(home_gc,2)} | "
+        f"Away GC {round(away_gc,2)}"
+    )
+
+    return True, [contexto]
+
+# ==============================
 # CALCULAR LAMBDAS
 # ==============================
 
@@ -524,7 +955,7 @@ def calcular_lambdas(p):
 
         if not stats_home or not stats_away:
             print("⚠️ No hay stats suficientes para uno de los equipos")
-            return None, None
+            return None, None, None, None
 
         atk_home_temp = limpiar_promedio(
             stats_home["goals"]["for"]["average"]["home"]
@@ -570,7 +1001,9 @@ def calcular_lambdas(p):
 
             return (
                 min(lam_local, 3.2),
-                min(lam_visit, 3.2)
+                min(lam_visit, 3.2),
+                None,
+                None
             )
 
         atk_home = (
@@ -606,21 +1039,25 @@ def calcular_lambdas(p):
             f"| Home GF: {round(forma_home['gf'],2)} "
             f"| Home GC: {round(forma_home['gc'],2)} "
             f"| Home PJ: {forma_home['partidos']} "
+            f"| Home O2.5: {forma_home.get('over25', 0)}/{forma_home['partidos']} "
             f"| Away GF: {round(forma_away['gf'],2)} "
             f"| Away GC: {round(forma_away['gc'],2)} "
-            f"| Away PJ: {forma_away['partidos']}"
+            f"| Away PJ: {forma_away['partidos']} "
+            f"| Away O2.5: {forma_away.get('over25', 0)}/{forma_away['partidos']}"
         )
 
         return (
             min(lam_local, 3.2),
-            min(lam_visit, 3.2)
+            min(lam_visit, 3.2),
+            forma_home,
+            forma_away
         )
 
     except Exception as e:
 
         print("❌ Error lambdas:", e)
 
-        return None, None
+        return None, None, None, None
 
 # ==============================
 # MAIN
@@ -704,7 +1141,7 @@ def main():
 
             print(f"🎲 Mercados encontrados en odds: {len(bets)}")
 
-            lamL, lamV = calcular_lambdas(p)
+            lamL, lamV, forma_home, forma_away = calcular_lambdas(p)
 
             if lamL is None:
                 print(f"⚠️ Sin lambdas/stats suficientes: {local} vs {visitante}")
@@ -780,6 +1217,32 @@ def main():
                                     + total_lambda
                                 )
 
+                                ok_contexto_o15, razones_contexto_o15 = validar_over15_contexto(
+                                    nivel_liga,
+                                    lamL,
+                                    lamV,
+                                    total_lambda,
+                                    prob_o15,
+                                    odd,
+                                    forma_home,
+                                    forma_away
+                                )
+
+                                if not ok_contexto_o15:
+                                    print(
+                                        f"⛔ Over 1.5 bloqueado por contexto "
+                                        f"| {local} vs {visitante}"
+                                    )
+
+                                    for razon in razones_contexto_o15:
+                                        print(f"   - {razon}")
+
+                                    continue
+
+                                contexto_o15_ok = " | ".join(
+                                    razones_contexto_o15
+                                )
+
                                 if (
                                     val > filtros["min_value"]
                                     and prob_o15 > filtros["min_prob"]
@@ -810,7 +1273,8 @@ def main():
                                         f"| Odd: {odd} "
                                         f"| Prob: {round(prob_o15,2)} "
                                         f"| Value: {round(val,2)} "
-                                        f"| Score: {round(score,2)}"
+                                        f"| Score: {round(score,2)} "
+                                        f"| Contexto: {contexto_o15_ok}"
                                     )
 
                                     picks_partido.append({
@@ -824,7 +1288,9 @@ def main():
                                         "prob": prob_o15,
                                         "value": val,
                                         "score": round(score, 2),
-                                        "stake": stake
+                                        "stake": stake,
+                                        "version_estrategia": "multi_market_context_v3",
+                                        "contexto": contexto_o15_ok
                                     })
 
                                 else:
@@ -865,23 +1331,9 @@ def main():
                                     + total_lambda
                                 )
 
-                                # ==============================
-                                # PROTECCIÓN OVER 2.5 CUOTA BAJA
-                                # ==============================
+                                if odd < 1.60:
 
-                                if odd < 1.55:
-
-                                    if nivel_liga == "TOP" and prob_o < 0.68:
-                                        print(
-                                            f"⛔ Over 2.5 descartado por cuota baja sin probabilidad premium "
-                                            f"| Nivel: {nivel_liga} "
-                                            f"| Odd: {odd} "
-                                            f"| Prob: {round(prob_o,2)} "
-                                            f"| Prob mínima premium: 0.68"
-                                        )
-                                        continue
-
-                                    if nivel_liga == "MEDIA" and prob_o < 0.70:
+                                    if nivel_liga == "TOP" and prob_o < 0.70:
                                         print(
                                             f"⛔ Over 2.5 descartado por cuota baja sin probabilidad premium "
                                             f"| Nivel: {nivel_liga} "
@@ -890,6 +1342,40 @@ def main():
                                             f"| Prob mínima premium: 0.70"
                                         )
                                         continue
+
+                                    if nivel_liga == "MEDIA":
+                                        print(
+                                            f"⛔ Over 2.5 descartado por cuota baja en liga media "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd}"
+                                        )
+                                        continue
+
+                                ok_contexto, razones_contexto = validar_over25_contexto(
+                                    nivel_liga,
+                                    lamL,
+                                    lamV,
+                                    total_lambda,
+                                    prob_o,
+                                    odd,
+                                    forma_home,
+                                    forma_away
+                                )
+
+                                if not ok_contexto:
+                                    print(
+                                        f"⛔ Over 2.5 bloqueado por contexto "
+                                        f"| {local} vs {visitante}"
+                                    )
+
+                                    for razon in razones_contexto:
+                                        print(f"   - {razon}")
+
+                                    continue
+
+                                contexto_ok = " | ".join(
+                                    razones_contexto
+                                )
 
                                 if (
                                     val > filtros["min_value"]
@@ -921,7 +1407,8 @@ def main():
                                         f"| Odd: {odd} "
                                         f"| Prob: {round(prob_o,2)} "
                                         f"| Value: {round(val,2)} "
-                                        f"| Score: {round(score,2)}"
+                                        f"| Score: {round(score,2)} "
+                                        f"| Contexto: {contexto_ok}"
                                     )
 
                                     picks_partido.append({
@@ -935,7 +1422,9 @@ def main():
                                         "prob": prob_o,
                                         "value": val,
                                         "score": round(score, 2),
-                                        "stake": stake
+                                        "stake": stake,
+                                        "version_estrategia": "multi_market_context_v3",
+                                        "contexto": contexto_ok
                                     })
 
                                 else:
@@ -982,50 +1471,31 @@ def main():
                                     + total_lambda
                                 )
 
-                                # ==============================
-                                # PROTECCIÓN BTTS EQUILIBRIO
-                                # ==============================
+                                ok_btts_contexto, razones_btts_contexto = validar_btts_contexto(
+                                    nivel_liga,
+                                    lamL,
+                                    lamV,
+                                    total_lambda,
+                                    prob_b,
+                                    odd,
+                                    forma_home,
+                                    forma_away
+                                )
 
-                                if lamL < 0.95 or lamV < 0.95:
+                                if not ok_btts_contexto:
                                     print(
-                                        f"⛔ BTTS descartado por lambda individual baja "
-                                        f"| Local: {round(lamL,2)} "
-                                        f"| Visitante: {round(lamV,2)} "
-                                        f"| Mínimo: 0.95"
+                                        f"⛔ BTTS bloqueado por contexto "
+                                        f"| {local} vs {visitante}"
                                     )
+
+                                    for razon in razones_btts_contexto:
+                                        print(f"   - {razon}")
+
                                     continue
 
-                                if abs(lamL - lamV) > 1.35:
-                                    print(
-                                        f"⛔ BTTS descartado por desequilibrio de lambdas "
-                                        f"| Local: {round(lamL,2)} "
-                                        f"| Visitante: {round(lamV,2)} "
-                                        f"| Diferencia: {round(abs(lamL - lamV),2)} "
-                                        f"| Máximo: 1.35"
-                                    )
-                                    continue
-
-                                if odd < 1.65:
-
-                                    if nivel_liga == "TOP" and prob_b < 0.68:
-                                        print(
-                                            f"⛔ BTTS descartado por cuota baja sin probabilidad premium "
-                                            f"| Nivel: {nivel_liga} "
-                                            f"| Odd: {odd} "
-                                            f"| Prob: {round(prob_b,2)} "
-                                            f"| Prob mínima premium: 0.68"
-                                        )
-                                        continue
-
-                                    if nivel_liga == "MEDIA" and prob_b < 0.70:
-                                        print(
-                                            f"⛔ BTTS descartado por cuota baja sin probabilidad premium "
-                                            f"| Nivel: {nivel_liga} "
-                                            f"| Odd: {odd} "
-                                            f"| Prob: {round(prob_b,2)} "
-                                            f"| Prob mínima premium: 0.70"
-                                        )
-                                        continue
+                                contexto_btts_ok = " | ".join(
+                                    razones_btts_contexto
+                                )
 
                                 if (
                                     val > filtros["min_value"]
@@ -1057,7 +1527,8 @@ def main():
                                         f"| Odd: {odd} "
                                         f"| Prob: {round(prob_b,2)} "
                                         f"| Value: {round(val,2)} "
-                                        f"| Score: {round(score,2)}"
+                                        f"| Score: {round(score,2)} "
+                                        f"| Contexto: {contexto_btts_ok}"
                                     )
 
                                     picks_partido.append({
@@ -1071,7 +1542,9 @@ def main():
                                         "prob": prob_b,
                                         "value": val,
                                         "score": round(score, 2),
-                                        "stake": stake
+                                        "stake": stake,
+                                        "version_estrategia": "multi_market_context_v3",
+                                        "contexto": contexto_btts_ok
                                     })
 
                                 else:
@@ -1108,15 +1581,6 @@ def main():
                     f"{mejor_pick['market']} "
                     f"| Score: {round(mejor_pick['score'],2)}"
                 )
-
-                with open(
-                    RUTA_ENVIADOS,
-                    "a"
-                ) as f:
-
-                    f.write(
-                        fixture_id + "\n"
-                    )
 
             else:
                 print(f"❌ Sin mercado válido para: {local} vs {visitante}")
@@ -1219,6 +1683,34 @@ def main():
         print(f"💾 Picks guardadas: {len(picks)}")
         print("📌 Picks guardadas con notificado = no")
         print("📨 El envío a Telegram lo hará enviar_telegram.py")
+
+        # ==============================
+        # MARCAR FIXTURES COMO ENVIADOS
+        # SOLO DESPUÉS DE GUARDAR
+        # ==============================
+
+        with open(
+            RUTA_ENVIADOS,
+            "a"
+        ) as f:
+
+            for p in picks:
+
+                fixture_id = str(
+                    p["fixture_id"]
+                )
+
+                if fixture_id not in ENVIADOS:
+
+                    f.write(
+                        fixture_id + "\n"
+                    )
+
+                    ENVIADOS.add(
+                        fixture_id
+                    )
+
+        print("🧾 enviados.txt actualizado después de guardar picks")
 
     else:
 
