@@ -61,6 +61,89 @@ def to_float(valor, default=0):
         return default
 
 # ==============================
+# OBTENER NIVEL SEGURO
+# ==============================
+
+def obtener_nivel(row):
+
+    nivel = str(
+        row.get("nivel", "")
+    ).strip().upper()
+
+    return nivel
+
+# ==============================
+# VALIDAR NIVEL
+# ==============================
+
+def nivel_valido(nivel):
+
+    return nivel in [
+        "CONSERVADORA",
+        "NORMAL",
+        "FUERTE",
+        "ELITE"
+    ]
+
+# ==============================
+# SCORE MÍNIMO POR NIVEL Y MERCADO
+# ==============================
+
+def score_minimo_por_nivel(mercado, nivel):
+
+    # Estos mínimos están alineados con modelo.py y main.py.
+    # No usar score 25 porque el score nuevo calibrado
+    # normalmente cae entre 13 y 22.
+
+    if mercado == "Over 1.5":
+
+        if nivel == "CONSERVADORA":
+            return 12.5
+
+        if nivel == "NORMAL":
+            return 13.5
+
+        if nivel == "FUERTE":
+            return 15.5
+
+        if nivel == "ELITE":
+            return 18.0
+
+    if mercado == "Over 2.5":
+
+        if nivel == "NORMAL":
+            return 15.0
+
+        if nivel == "FUERTE":
+            return 16.5
+
+        if nivel == "ELITE":
+            return 18.5
+
+        # Over 2.5 no debería venir como CONSERVADORA.
+        # Si llega así, lo bloqueamos.
+        if nivel == "CONSERVADORA":
+            return 999
+
+    if mercado == "BTTS":
+
+        if nivel == "NORMAL":
+            return 14.5
+
+        if nivel == "FUERTE":
+            return 16.5
+
+        if nivel == "ELITE":
+            return 18.5
+
+        # BTTS no debería venir como CONSERVADORA.
+        # Si llega así, lo bloqueamos.
+        if nivel == "CONSERVADORA":
+            return 999
+
+    return 999
+
+# ==============================
 # VALIDAR PICK ENVIABLE
 # ==============================
 
@@ -73,6 +156,8 @@ def pick_es_enviable(row):
     partido = str(
         row.get("partido", "")
     ).strip()
+
+    nivel = obtener_nivel(row)
 
     score = to_float(
         row.get("score", 0)
@@ -142,23 +227,51 @@ def pick_es_enviable(row):
     if score <= 0:
         return False, f"Score inválido: {score}"
 
+    if not nivel_valido(nivel):
+        return False, f"Nivel inválido o vacío: {nivel}"
+
+    score_minimo = score_minimo_por_nivel(
+        mercado,
+        nivel
+    )
+
+    if score < score_minimo:
+        return False, (
+            f"{mercado} nivel {nivel} con score menor a "
+            f"{score_minimo}: {score}"
+        )
+
     # ==============================
     # FILTROS OVER 2.5
     # ==============================
 
     if mercado == "Over 2.5":
 
-        if score < 25:
-            return False, f"Over 2.5 con score menor a 25: {score}"
+        if nivel == "CONSERVADORA":
+            return False, "Over 2.5 no se envía como CONSERVADORA"
 
         if odd < 1.60:
             return False, f"Over 2.5 con odd baja: {odd}"
 
-        if prob < 0.70:
-            return False, f"Over 2.5 con probabilidad menor a 0.70: {prob}"
+        if odd > 2.55:
+            return False, f"Over 2.5 con odd demasiado alta/riesgosa: {odd}"
+
+        if prob < 0.64:
+            return False, f"Over 2.5 con probabilidad menor a 0.64: {prob}"
+
+        if value < 0.04:
+            return False, f"Over 2.5 con value menor a 0.04: {value}"
 
         if "OK Over25" not in contexto:
             return False, "Over 2.5 sin contexto OK Over25"
+
+        # Seguridad extra:
+        # Debe traer señales recientes de tendencia.
+        if "Home O2.5" not in contexto or "Away O2.5" not in contexto:
+            return False, "Over 2.5 sin datos O2.5 recientes en contexto"
+
+        if "Home avg" not in contexto or "Away avg" not in contexto:
+            return False, "Over 2.5 sin promedios recientes en contexto"
 
     # ==============================
     # FILTROS OVER 1.5
@@ -166,51 +279,48 @@ def pick_es_enviable(row):
 
     if mercado == "Over 1.5":
 
-        if score < 19:
-            return False, f"Over 1.5 con score menor a 19: {score}"
-
         if odd < 1.30:
             return False, f"Over 1.5 con odd demasiado baja: {odd}"
 
-        if prob < 0.88:
-            return False, f"Over 1.5 con probabilidad menor a 0.88: {prob}"
+        if odd > 1.78:
+            return False, f"Over 1.5 con odd demasiado alta para este mercado: {odd}"
+
+        if prob < 0.76:
+            return False, f"Over 1.5 con probabilidad menor a 0.76: {prob}"
+
+        if value < 0.015:
+            return False, f"Over 1.5 con value menor a 0.015: {value}"
 
         if "OK Over15" not in contexto:
             return False, "Over 1.5 sin contexto OK Over15"
 
+        if "Home GF" not in contexto or "Away GF" not in contexto:
+            return False, "Over 1.5 sin datos GF en contexto"
+
     # ==============================
-    # FILTROS BTTS EXIGENTES
+    # FILTROS BTTS
     # ==============================
 
     if mercado == "BTTS":
 
-        # Score mínimo fuerte
-        if score < 23:
-            return False, f"BTTS con score menor a 23: {score}"
+        if nivel == "CONSERVADORA":
+            return False, "BTTS no se envía como CONSERVADORA"
 
-        # Odd mínima para que valga la pena
         if odd < 1.65:
             return False, f"BTTS con odd menor a 1.65: {odd}"
 
-        # Evitar cuotas demasiado altas/riesgosas
         if odd > 2.35:
             return False, f"BTTS con odd demasiado alta: {odd}"
 
-        # Probabilidad mínima exigente
-        if prob < 0.64:
-            return False, f"BTTS con probabilidad menor a 0.64: {prob}"
+        if prob < 0.60:
+            return False, f"BTTS con probabilidad menor a 0.60: {prob}"
 
-        # Value mínimo real
         if value < 0.04:
             return False, f"BTTS con value menor a 0.04: {value}"
 
-        # Debe venir aprobado desde main.py por contexto
         if "OK BTTS" not in contexto:
             return False, "BTTS sin contexto OK BTTS"
 
-        # Seguridad extra:
-        # si el contexto no trae señales de goles a favor/contra,
-        # mejor no enviarlo.
         if "Home GF" not in contexto or "Away GF" not in contexto:
             return False, "BTTS sin datos GF en contexto"
 
@@ -225,7 +335,7 @@ def pick_es_enviable(row):
 
 def formatear_mensaje(picks):
 
-    mensaje = "🔥 PICKS TOP DEL BOT 🔥\n\n"
+    mensaje = "🔥 PICKS DEL BOT 🔥\n\n"
 
     for p in picks:
 
@@ -237,13 +347,15 @@ def formatear_mensaje(picks):
         prob = p.get("prob", "")
         value = p.get("value", "")
         score = p.get("score", "")
+        nivel = p.get("nivel", "")
         stake = p.get("stake", "")
         contexto = p.get("contexto", "")
 
-        mensaje += "🔥 PICK TOP 🔥\n"
+        mensaje += "🎯 PICK VALIDADA\n"
         mensaje += f"⚽ {partido}\n"
         mensaje += f"🏆 {liga}\n"
         mensaje += f"📅 Partido: {fecha}\n"
+        mensaje += f"📌 Nivel: {nivel}\n"
         mensaje += f"🎯 Mercado: {mercado}\n"
         mensaje += f"💰 Odd: {odd}\n"
         mensaje += f"📊 Prob: {prob}\n"
@@ -356,6 +468,13 @@ def main():
         return
 
     fieldnames = list(rows[0].keys())
+
+    # Seguridad:
+    # si el CSV viejo no tiene columna nivel, no enviamos para evitar
+    # columnas corridas o picks mal interpretadas.
+    if "nivel" not in fieldnames:
+        print("❌ picks.csv no tiene columna 'nivel'. Corrige el encabezado antes de enviar.")
+        return
 
     picks_enviables = []
 

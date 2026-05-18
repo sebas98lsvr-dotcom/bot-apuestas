@@ -19,9 +19,10 @@ from stats_api import (
 
 from modelo import (
     prob_over_25,
+    prob_under_25,
     prob_btts,
     calcular_value,
-    calcular_stake
+    calcular_stake_por_nivel
 )
 
 # ==============================
@@ -141,6 +142,7 @@ def guardar(picks):
         "prob",
         "value",
         "score",
+        "nivel",
         "stake",
         "resultado",
         "profit",
@@ -177,13 +179,14 @@ def guardar(picks):
                 "prob": round(p["prob"], 2),
                 "value": round(p["value"], 2),
                 "score": round(p["score"], 2),
+                "nivel": p.get("nivel", "NORMAL"),
                 "stake": p["stake"],
                 "resultado": "pendiente",
                 "profit": 0,
                 "notificado": "no",
                 "version_estrategia": p.get(
                     "version_estrategia",
-                    "multi_market_context_v3"
+                    "multi_market_context_v6_under25_observacion"
                 ),
                 "contexto": p.get(
                     "contexto",
@@ -358,6 +361,18 @@ def obtener_nivel_liga(league_name, country):
 
 def obtener_filtros_mercado(nivel_liga, mercado):
 
+    # ==================================================
+    # IMPORTANTE:
+    # Estos filtros están calibrados con la fórmula real:
+    #
+    # score = (value * 100) + (prob * 10) + total_lambda
+    #
+    # Para Under 2.5 se usa:
+    #
+    # score = (value * 100) + (prob * 10) + ((3.0 - total_lambda) * 2)
+    #
+    # ==================================================
+
     if nivel_liga == "TOP":
 
         if mercado == "Over 1.5":
@@ -367,7 +382,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.55,
                 "min_odd": 1.30,
                 "max_odd": 1.78,
-                "min_score": 19
+                "min_score": 13
             }
 
         if mercado == "Over 2.5":
@@ -377,7 +392,17 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.70,
                 "min_odd": 1.55,
                 "max_odd": 2.70,
-                "min_score": 23
+                "min_score": 14
+            }
+
+        if mercado == "Under 2.5":
+            return {
+                "min_value": 0.035,
+                "min_prob": 0.58,
+                "max_lambda": 2.35,
+                "min_odd": 1.55,
+                "max_odd": 2.35,
+                "min_score": 13.5
             }
 
         if mercado == "BTTS":
@@ -387,7 +412,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.50,
                 "min_odd": 1.65,
                 "max_odd": 2.35,
-                "min_score": 23
+                "min_score": 14
             }
 
     if nivel_liga == "MEDIA":
@@ -399,7 +424,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.70,
                 "min_odd": 1.35,
                 "max_odd": 1.78,
-                "min_score": 20
+                "min_score": 13
             }
 
         if mercado == "Over 2.5":
@@ -409,7 +434,17 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.95,
                 "min_odd": 1.60,
                 "max_odd": 2.55,
-                "min_score": 23
+                "min_score": 15
+            }
+
+        if mercado == "Under 2.5":
+            return {
+                "min_value": 0.04,
+                "min_prob": 0.60,
+                "max_lambda": 2.25,
+                "min_odd": 1.60,
+                "max_odd": 2.30,
+                "min_score": 14.5
             }
 
         if mercado == "BTTS":
@@ -419,7 +454,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.70,
                 "min_odd": 1.70,
                 "max_odd": 2.30,
-                "min_score": 24
+                "min_score": 15
             }
 
     return None
@@ -752,6 +787,192 @@ def validar_over25_contexto(
     return True, [contexto]
 
 # ==============================
+# VALIDAR UNDER 2.5 CONTEXTO
+# ==============================
+
+def validar_under25_contexto(
+    nivel_liga,
+    lamL,
+    lamV,
+    total_lambda,
+    prob_u25,
+    odd,
+    forma_home,
+    forma_away
+):
+
+    razones = []
+
+    if forma_home is None or forma_away is None:
+        razones.append(
+            "Sin forma reciente suficiente para validar Under 2.5"
+        )
+        return False, razones
+
+    home_pj = forma_home.get("partidos", 0)
+    away_pj = forma_away.get("partidos", 0)
+
+    home_over25 = forma_home.get("over25", 0)
+    away_over25 = forma_away.get("over25", 0)
+
+    home_under25 = forma_home.get("under25", 0)
+    away_under25 = forma_away.get("under25", 0)
+
+    home_avg_total = forma_home.get("avg_total_goals", 0)
+    away_avg_total = forma_away.get("avg_total_goals", 0)
+
+    home_gf = forma_home.get("gf", 0)
+    home_gc = forma_home.get("gc", 0)
+
+    away_gf = forma_away.get("gf", 0)
+    away_gc = forma_away.get("gc", 0)
+
+    home_btts = forma_home.get("btts", 0)
+    away_btts = forma_away.get("btts", 0)
+
+    home_clean_sheets = forma_home.get("clean_sheets", 0)
+    away_clean_sheets = forma_away.get("clean_sheets", 0)
+
+    home_failed_to_score = forma_home.get("failed_to_score", 0)
+    away_failed_to_score = forma_away.get("failed_to_score", 0)
+
+    if home_pj < 4 or away_pj < 4:
+        razones.append(
+            f"Muestra baja Under 2.5: home {home_pj}, away {away_pj}"
+        )
+
+    if nivel_liga == "TOP":
+
+        if total_lambda > 2.35:
+            razones.append(
+                f"Lambda alta para Under 2.5 en liga TOP: {round(total_lambda,2)}"
+            )
+
+        if prob_u25 < 0.58:
+            razones.append(
+                f"Probabilidad baja para Under 2.5 en liga TOP: {round(prob_u25,2)}"
+            )
+
+    if nivel_liga == "MEDIA":
+
+        if total_lambda > 2.25:
+            razones.append(
+                f"Lambda alta para Under 2.5 en liga media: {round(total_lambda,2)}"
+            )
+
+        if prob_u25 < 0.60:
+            razones.append(
+                f"Probabilidad baja para Under 2.5 en liga media: {round(prob_u25,2)}"
+            )
+
+    if lamL >= 1.75:
+        razones.append(
+            f"Lambda local alta para Under 2.5: {round(lamL,2)}"
+        )
+
+    if lamV >= 1.75:
+        razones.append(
+            f"Lambda visitante alta para Under 2.5: {round(lamV,2)}"
+        )
+
+    if home_over25 >= max(5, home_pj - 2) and away_over25 >= max(5, away_pj - 2):
+        razones.append(
+            f"Ambos equipos vienen muy Over 2.5: home {home_over25}/{home_pj}, away {away_over25}/{away_pj}"
+        )
+
+    if home_avg_total >= 2.80 and away_avg_total >= 2.80:
+        razones.append(
+            f"Promedios recientes altos contra Under 2.5: home {round(home_avg_total,2)}, away {round(away_avg_total,2)}"
+        )
+
+    if home_gf >= 1.75 and away_gf >= 1.50:
+        razones.append(
+            f"Ataques fuertes contra Under 2.5: home GF {round(home_gf,2)}, away GF {round(away_gf,2)}"
+        )
+
+    if home_gc >= 1.80 and away_gc >= 1.80:
+        razones.append(
+            f"Defensas débiles contra Under 2.5: home GC {round(home_gc,2)}, away GC {round(away_gc,2)}"
+        )
+
+    if home_btts >= max(5, home_pj - 2) and away_btts >= max(5, away_pj - 2):
+        razones.append(
+            f"BTTS reciente alto contra Under 2.5: home {home_btts}/{home_pj}, away {away_btts}/{away_pj}"
+        )
+
+    # Señales positivas mínimas.
+    señales_under = 0
+
+    if home_under25 >= max(4, home_pj // 2):
+        señales_under += 1
+
+    if away_under25 >= max(4, away_pj // 2):
+        señales_under += 1
+
+    if home_avg_total <= 2.25:
+        señales_under += 1
+
+    if away_avg_total <= 2.25:
+        señales_under += 1
+
+    if home_gf <= 1.20:
+        señales_under += 1
+
+    if away_gf <= 1.20:
+        señales_under += 1
+
+    if home_gc <= 1.20:
+        señales_under += 1
+
+    if away_gc <= 1.20:
+        señales_under += 1
+
+    if home_btts <= max(3, home_pj // 2):
+        señales_under += 1
+
+    if away_btts <= max(3, away_pj // 2):
+        señales_under += 1
+
+    if home_clean_sheets >= 2 or away_clean_sheets >= 2:
+        señales_under += 1
+
+    if home_failed_to_score >= 2 or away_failed_to_score >= 2:
+        señales_under += 1
+
+    if señales_under < 4:
+        razones.append(
+            f"Pocas señales reales de Under 2.5: {señales_under}"
+        )
+
+    if odd < 1.55:
+        razones.append(
+            f"Odd demasiado baja para Under 2.5: {odd}"
+        )
+
+    if odd > 2.35:
+        razones.append(
+            f"Odd demasiado alta/riesgosa para Under 2.5: {odd}"
+        )
+
+    if razones:
+        return False, razones
+
+    contexto = (
+        f"OK Under25 | "
+        f"Home U2.5 {home_under25}/{home_pj} | "
+        f"Away U2.5 {away_under25}/{away_pj} | "
+        f"Home avg {round(home_avg_total,2)} | "
+        f"Away avg {round(away_avg_total,2)} | "
+        f"Home GF {round(home_gf,2)} | "
+        f"Away GF {round(away_gf,2)} | "
+        f"Home GC {round(home_gc,2)} | "
+        f"Away GC {round(away_gc,2)} | "
+        f"BTTS H/A {home_btts}/{home_pj}-{away_btts}/{away_pj}"
+    )
+
+    return True, [contexto]
+
+# ==============================
 # VALIDAR BTTS CONTEXTO ESTRICTO
 # ==============================
 
@@ -1040,10 +1261,12 @@ def calcular_lambdas(p):
             f"| Home GC: {round(forma_home['gc'],2)} "
             f"| Home PJ: {forma_home['partidos']} "
             f"| Home O2.5: {forma_home.get('over25', 0)}/{forma_home['partidos']} "
+            f"| Home U2.5: {forma_home.get('under25', 0)}/{forma_home['partidos']} "
             f"| Away GF: {round(forma_away['gf'],2)} "
             f"| Away GC: {round(forma_away['gc'],2)} "
             f"| Away PJ: {forma_away['partidos']} "
-            f"| Away O2.5: {forma_away.get('over25', 0)}/{forma_away['partidos']}"
+            f"| Away O2.5: {forma_away.get('over25', 0)}/{forma_away['partidos']} "
+            f"| Away U2.5: {forma_away.get('under25', 0)}/{forma_away['partidos']}"
         )
 
         return (
@@ -1155,11 +1378,17 @@ def main():
                 f"| Total: {round(total_lambda,2)}"
             )
 
-            if total_lambda < 2.1:
-                print(f"⛔ Descartado por lambda baja general: {round(total_lambda,2)}")
-                continue
+            # Antes se descartaba todo con lambda < 2.1.
+            # Ahora NO hacemos ese descarte global porque Under 2.5
+            # precisamente puede vivir en lambdas bajas.
+            # Los mercados Over/BTTS ya tienen sus propios filtros.
 
             prob_o = prob_over_25(
+                lamL,
+                lamV
+            )
+
+            prob_u25 = prob_under_25(
                 lamL,
                 lamV
             )
@@ -1178,6 +1407,7 @@ def main():
                 f"🧠 Probabilidades modelo "
                 f"| Over 1.5: {round(prob_o15,2)} "
                 f"| Over 2.5: {round(prob_o,2)} "
+                f"| Under 2.5: {round(prob_u25,2)} "
                 f"| BTTS: {round(prob_b,2)}"
             )
 
@@ -1186,7 +1416,7 @@ def main():
             for b in bets:
 
                 # ==============================
-                # OVERS
+                # GOALS OVER/UNDER
                 # ==============================
 
                 if b["name"] == "Goals Over/Under":
@@ -1250,11 +1480,26 @@ def main():
                                     and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
-                                    stake = calcular_stake(
-                                        BANK,
-                                        val,
-                                        odd
+                                    nivel_pick, stake = calcular_stake_por_nivel(
+                                        mercado="Over 1.5",
+                                        score=score,
+                                        prob=prob_o15,
+                                        value=val,
+                                        odd=odd,
+                                        total_lambda=total_lambda,
+                                        nivel_liga=nivel_liga
                                     )
+
+                                    if nivel_pick == "DESCARTADA":
+                                        print(
+                                            f"⛔ Over 1.5 descartado por nivel "
+                                            f"| Nivel liga: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_o15,2)} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)}"
+                                        )
+                                        continue
 
                                     if score < filtros["min_score"]:
                                         print(
@@ -1274,6 +1519,8 @@ def main():
                                         f"| Prob: {round(prob_o15,2)} "
                                         f"| Value: {round(val,2)} "
                                         f"| Score: {round(score,2)} "
+                                        f"| Nivel pick: {nivel_pick} "
+                                        f"| Stake: {stake} "
                                         f"| Contexto: {contexto_o15_ok}"
                                     )
 
@@ -1288,8 +1535,9 @@ def main():
                                         "prob": prob_o15,
                                         "value": val,
                                         "score": round(score, 2),
+                                        "nivel": nivel_pick,
                                         "stake": stake,
-                                        "version_estrategia": "multi_market_context_v3",
+                                        "version_estrategia": "multi_market_context_v6_under25_observacion",
                                         "contexto": contexto_o15_ok
                                     })
 
@@ -1384,11 +1632,26 @@ def main():
                                     and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
-                                    stake = calcular_stake(
-                                        BANK,
-                                        val,
-                                        odd
+                                    nivel_pick, stake = calcular_stake_por_nivel(
+                                        mercado="Over 2.5",
+                                        score=score,
+                                        prob=prob_o,
+                                        value=val,
+                                        odd=odd,
+                                        total_lambda=total_lambda,
+                                        nivel_liga=nivel_liga
                                     )
+
+                                    if nivel_pick == "DESCARTADA":
+                                        print(
+                                            f"⛔ Over 2.5 descartado por nivel "
+                                            f"| Nivel liga: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_o,2)} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)}"
+                                        )
+                                        continue
 
                                     if score < filtros["min_score"]:
                                         print(
@@ -1408,6 +1671,8 @@ def main():
                                         f"| Prob: {round(prob_o,2)} "
                                         f"| Value: {round(val,2)} "
                                         f"| Score: {round(score,2)} "
+                                        f"| Nivel pick: {nivel_pick} "
+                                        f"| Stake: {stake} "
                                         f"| Contexto: {contexto_ok}"
                                     )
 
@@ -1422,8 +1687,9 @@ def main():
                                         "prob": prob_o,
                                         "value": val,
                                         "score": round(score, 2),
+                                        "nivel": nivel_pick,
                                         "stake": stake,
-                                        "version_estrategia": "multi_market_context_v3",
+                                        "version_estrategia": "multi_market_context_v6_under25_observacion",
                                         "contexto": contexto_ok
                                     })
 
@@ -1439,6 +1705,146 @@ def main():
 
                             except Exception as e:
                                 print("⚠️ Error evaluando Over 2.5:", e)
+                                continue
+
+                        # UNDER 2.5
+
+                        if v["value"] == "Under 2.5":
+
+                            try:
+
+                                odd = float(v["odd"])
+
+                                val = calcular_value(
+                                    prob_u25,
+                                    odd
+                                )
+
+                                filtros = obtener_filtros_mercado(
+                                    nivel_liga,
+                                    "Under 2.5"
+                                )
+
+                                if filtros is None:
+                                    print(
+                                        f"⛔ Sin filtros para Under 2.5 "
+                                        f"| Nivel liga: {nivel_liga}"
+                                    )
+                                    continue
+
+                                score = (
+                                    (val * 100)
+                                    + (prob_u25 * 10)
+                                    + ((3.0 - total_lambda) * 2)
+                                )
+
+                                ok_under_contexto, razones_under_contexto = validar_under25_contexto(
+                                    nivel_liga,
+                                    lamL,
+                                    lamV,
+                                    total_lambda,
+                                    prob_u25,
+                                    odd,
+                                    forma_home,
+                                    forma_away
+                                )
+
+                                if not ok_under_contexto:
+                                    print(
+                                        f"⛔ Under 2.5 bloqueado por contexto "
+                                        f"| {local} vs {visitante}"
+                                    )
+
+                                    for razon in razones_under_contexto:
+                                        print(f"   - {razon}")
+
+                                    continue
+
+                                contexto_under_ok = " | ".join(
+                                    razones_under_contexto
+                                )
+
+                                if (
+                                    val > filtros["min_value"]
+                                    and prob_u25 > filtros["min_prob"]
+                                    and total_lambda <= filtros["max_lambda"]
+                                    and filtros["min_odd"] <= odd <= filtros["max_odd"]
+                                ):
+
+                                    nivel_pick, stake = calcular_stake_por_nivel(
+                                        mercado="Under 2.5",
+                                        score=score,
+                                        prob=prob_u25,
+                                        value=val,
+                                        odd=odd,
+                                        total_lambda=total_lambda,
+                                        nivel_liga=nivel_liga
+                                    )
+
+                                    if nivel_pick == "DESCARTADA":
+                                        print(
+                                            f"⛔ Under 2.5 descartado por nivel "
+                                            f"| Nivel liga: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_u25,2)} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)} "
+                                            f"| Lambda: {round(total_lambda,2)}"
+                                        )
+                                        continue
+
+                                    if score < filtros["min_score"]:
+                                        print(
+                                            f"⛔ Under 2.5 descartado por score bajo "
+                                            f"| Nivel: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)} "
+                                            f"| Score mínimo: {filtros['min_score']}"
+                                        )
+                                        continue
+
+                                    print(
+                                        f"✅ Candidato Under 2.5 "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_u25,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Score: {round(score,2)} "
+                                        f"| Nivel pick: {nivel_pick} "
+                                        f"| Stake: {stake} "
+                                        f"| Contexto: {contexto_under_ok}"
+                                    )
+
+                                    picks_partido.append({
+
+                                        "fixture_id": fixture_id,
+                                        "date": fecha_partido,
+                                        "match": f"{local} vs {visitante}",
+                                        "league": league_name,
+                                        "market": "Under 2.5",
+                                        "odd": odd,
+                                        "prob": prob_u25,
+                                        "value": val,
+                                        "score": round(score, 2),
+                                        "nivel": nivel_pick,
+                                        "stake": stake,
+                                        "version_estrategia": "multi_market_context_v6_under25_observacion",
+                                        "contexto": contexto_under_ok
+                                    })
+
+                                else:
+                                    print(
+                                        f"❌ Under 2.5 no cumple filtros "
+                                        f"| Nivel: {nivel_liga} "
+                                        f"| Odd: {odd} "
+                                        f"| Prob: {round(prob_u25,2)} "
+                                        f"| Value: {round(val,2)} "
+                                        f"| Lambda: {round(total_lambda,2)}"
+                                    )
+
+                            except Exception as e:
+                                print("⚠️ Error evaluando Under 2.5:", e)
                                 continue
 
                 # ==============================
@@ -1504,11 +1910,26 @@ def main():
                                     and filtros["min_odd"] <= odd <= filtros["max_odd"]
                                 ):
 
-                                    stake = calcular_stake(
-                                        BANK,
-                                        val,
-                                        odd
+                                    nivel_pick, stake = calcular_stake_por_nivel(
+                                        mercado="BTTS",
+                                        score=score,
+                                        prob=prob_b,
+                                        value=val,
+                                        odd=odd,
+                                        total_lambda=total_lambda,
+                                        nivel_liga=nivel_liga
                                     )
+
+                                    if nivel_pick == "DESCARTADA":
+                                        print(
+                                            f"⛔ BTTS descartado por nivel "
+                                            f"| Nivel liga: {nivel_liga} "
+                                            f"| Odd: {odd} "
+                                            f"| Prob: {round(prob_b,2)} "
+                                            f"| Value: {round(val,2)} "
+                                            f"| Score: {round(score,2)}"
+                                        )
+                                        continue
 
                                     if score < filtros["min_score"]:
                                         print(
@@ -1528,6 +1949,8 @@ def main():
                                         f"| Prob: {round(prob_b,2)} "
                                         f"| Value: {round(val,2)} "
                                         f"| Score: {round(score,2)} "
+                                        f"| Nivel pick: {nivel_pick} "
+                                        f"| Stake: {stake} "
                                         f"| Contexto: {contexto_btts_ok}"
                                     )
 
@@ -1542,8 +1965,9 @@ def main():
                                         "prob": prob_b,
                                         "value": val,
                                         "score": round(score, 2),
+                                        "nivel": nivel_pick,
                                         "stake": stake,
-                                        "version_estrategia": "multi_market_context_v3",
+                                        "version_estrategia": "multi_market_context_v6_under25_observacion",
                                         "contexto": contexto_btts_ok
                                     })
 
@@ -1579,7 +2003,9 @@ def main():
                 print(
                     f"🏆 Mejor pick: "
                     f"{mejor_pick['market']} "
-                    f"| Score: {round(mejor_pick['score'],2)}"
+                    f"| Score: {round(mejor_pick['score'],2)} "
+                    f"| Nivel: {mejor_pick.get('nivel', 'NORMAL')} "
+                    f"| Stake: {mejor_pick['stake']}"
                 )
 
             else:
@@ -1655,6 +2081,10 @@ def main():
     # ==============================
     # ORDENAR PICKS
     # ==============================
+    # Nota:
+    # No limitamos a pocas picks por miedo al volumen.
+    # La calidad debe venir de los filtros, contexto, nivel y stake.
+    # Se permiten hasta 20 picks si realmente cumplen los criterios.
 
     picks = sorted(
 
@@ -1664,7 +2094,7 @@ def main():
 
         reverse=True
 
-    )[:12]
+    )[:20]
 
     print(
         f"🔥 Picks finales: {len(picks)}"
