@@ -35,6 +35,11 @@ TELEGRAM_FILE = os.path.join(
     "enviar_telegram.py"
 )
 
+RESUMEN_FILE = os.path.join(
+    BASE_DIR,
+    "resumen_diario.py"
+)
+
 # =========================
 # CONTROL EJECUCION
 # =========================
@@ -132,6 +137,28 @@ while True:
         except Exception as e:
 
             print(f"⚠️ Error actualizando resultados: {e}")
+
+        # =========================
+        # RESUMEN DIARIO / WIN LOSS
+        # =========================
+
+        try:
+
+            print("📊 Ejecutando resumen diario...")
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    RESUMEN_FILE
+                ],
+                cwd=BASE_DIR
+            )
+
+            print("✅ Resumen diario terminado")
+
+        except Exception as e:
+
+            print(f"⚠️ Error ejecutando resumen diario: {e}")
 
         # =========================
         # ENVIAR PICKS PENDIENTES
