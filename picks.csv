@@ -1,12 +1,1 @@
-fecha,fixture_id,partido,liga,mercado,odd,prob,value,score,stake,resultado,profit,notificado,version_estrategia,contexto
-2026-05-17 12:00,1391184,Osasuna vs Espanyol,La Liga,Over 2.5,2.42,0.79,0.23,34.9,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 6/8 | Away O2.5 6/8 | Home avg 2.88 | Away avg 3.38 | Away GC 2.38
-2026-05-17 16:00,1544926,Albion FC vs Wanderers,Primera División - Apertura,Over 2.5,2.2,0.79,0.18,30.5,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 7/8 | Away O2.5 5/7 | Home avg 3.75 | Away avg 2.86 | Away GC 1.86
-2026-05-17 16:00,1543203,Estudiantes de Merida FC vs Carabobo FC,Primera División,Over 2.5,2.15,0.79,0.17,29.5,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 5/6 | Away O2.5 3/7 | Home avg 3.33 | Away avg 2.57 | Away GC 1.57
-2026-05-17 13:15,1512608,Deportivo Garcilaso vs UTC Cajamarca,Primera División,Over 2.5,2.05,0.79,0.15,27.6,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 3/7 | Away O2.5 5/7 | Home avg 2.71 | Away avg 3.43 | Away GC 2.0
-2026-05-17 09:00,1492269,Santos vs Coritiba,Serie A,Over 2.5,2.22,0.73,0.16,26.72,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 3/8 | Away O2.5 4/8 | Home avg 2.5 | Away avg 3.0 | Away GC 1.62
-2026-05-17 11:00,1512606,ADT vs Comerciantes Unidos,Primera División,Over 2.5,2.0,0.79,0.14,26.6,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 3/7 | Away O2.5 4/6 | Home avg 2.57 | Away avg 3.5 | Away GC 2.0
-2026-05-17 16:30,1492264,RB Bragantino vs Vitoria,Serie A,Over 2.5,2.05,0.77,0.14,26.27,30.0,pendiente,0,si,over25_context_v2,OK Over25 | Home O2.5 4/7 | Away O2.5 4/7 | Home avg 2.71 | Away avg 3.29 | Away GC 2.43
-2026-05-17 16:30,1492265,Chapecoense-sc vs Remo,Serie A,Over 1.5,1.33,0.92,0.06,19.12,30.0,pendiente,0,si,multi_market_context_v3,OK Over15 | Lambda 4.2 | Prob 0.92 | Home avg 3.5 | Away avg 2.88 | Home GF 1.38 | Away GF 0.88
-2026-05-18 13:30,1392197,Leganes vs Huesca,Segunda División,Over 2.5,1.95,0.79,0.14,25.58,30.0,pendiente,0,si,multi_market_context_v3,OK Over25 | Home O2.5 4/8 | Away O2.5 6/7 | Home avg 2.88 | Away avg 4.29 | Away GC 2.86
-2026-05-18 12:30,1531544,AFC Hermannstadt vs FCSB,Liga I,Over 2.5,1.91,0.79,0.13,24.8,30.0,pendiente,0,no,multi_market_context_v3,OK Over25 | Home O2.5 3/6 | Away O2.5 4/6 | Home avg 2.0 | Away avg 3.83 | Away GC 1.67
-2026-05-18 13:45,1492670,Waterford vs Drogheda United,Premier Division,Over 2.5,1.85,0.79,0.12,23.6,30.0,pendiente,0,no,multi_market_context_v3,OK Over25 | Home O2.5 2/7 | Away O2.5 6/7 | Home avg 2.43 | Away avg 4.14 | Away GC 2.57
+fecha,fixture_id,partido,liga,mercado,odd,prob,value,score,nivel,stake,resultado,profit,notificado,version_estrategia,contexto
