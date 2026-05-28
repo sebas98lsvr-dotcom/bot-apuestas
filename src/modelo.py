@@ -2,15 +2,14 @@ import math
 
 # ====================================
 # MODELO.PY
-# Versión: v6_calibrado_score_real_under25
-# Fecha: 2026-05-18
+# Versión: v7_prioridad_estabilidad
+# Fecha: 2026-05-27
 #
 # Objetivo:
-# - Mantener el modelo base de probabilidades.
-# - Mantener Over 1.5, Over 2.5 y BTTS como ya estaban.
-# - Agregar Under 2.5 de forma controlada.
-# - No convertir Under 2.5 en "lo contrario automático" del Over 2.5.
-# - Mantener compatibilidad con main.py.
+# - Priorizar Over 1.5, BTTS y Under 2.5.
+# - Convertir Over 2.5 en mercado premium.
+# - Reducir picks falsas de Over 2.5.
+# - Mantener compatibilidad total con main.py.
 # ====================================
 
 
@@ -90,8 +89,6 @@ def prob_under_25(lamL, lamV):
 
         prob = p0 + p1 + p2
 
-        # Under 2.5 debe ser conservador.
-        # No dejamos que se infle demasiado.
         return limitar_probabilidad(
             prob,
             min_prob=0.03,
@@ -143,7 +140,6 @@ def prob_btts(lamL, lamV):
         min_lam = min(lamL, lamV)
         max_lam = max(lamL, lamV)
 
-        # Penalización si un equipo tiene poco gol esperado
         if min_lam < 0.70:
             prob *= 0.55
 
@@ -156,7 +152,6 @@ def prob_btts(lamL, lamV):
         elif min_lam < 1.10:
             prob *= 0.92
 
-        # Penalización si el partido está muy desbalanceado
         ratio = max_lam / max(min_lam, 0.01)
 
         if ratio > 3.00:
@@ -198,8 +193,6 @@ def calcular_value(prob, odd):
         if prob <= 0 or prob >= 1:
             return -1
 
-        # Value conservador.
-        # Dividir entre 4 evita values demasiado agresivos.
         value = ((prob * odd) - 1) / 4
 
         return round(value, 3)
@@ -221,23 +214,6 @@ def clasificar_nivel_pick(
     total_lambda=None,
     nivel_liga=None
 ):
-    """
-    Clasifica una pick en:
-    - DESCARTADA
-    - CONSERVADORA
-    - NORMAL
-    - FUERTE
-    - ELITE
-
-    Importante:
-    El main.py ya hace filtros de contexto.
-    Esta función NO debe ser exageradamente estricta,
-    porque si no bloquea picks buenas.
-
-    Para Under 2.5:
-    - No se usa como contrario automático del Over 2.5.
-    - Solo clasifica si la lambda total es baja.
-    """
 
     try:
         score = float(score)
@@ -259,8 +235,6 @@ def clasificar_nivel_pick(
 
     if mercado == "Over 1.5":
 
-        # CONSERVADORA:
-        # Cuotas bajas, buena probabilidad, stake pequeño.
         if (
             score >= 12.5
             and prob >= 0.82
@@ -272,7 +246,7 @@ def clasificar_nivel_pick(
             nivel = "CONSERVADORA"
 
         if (
-            score >= 13.5
+            score >= 12.8
             and prob >= 0.79
             and value >= 0.035
             and total_lambda is not None
@@ -302,49 +276,47 @@ def clasificar_nivel_pick(
             nivel = "ELITE"
 
     # ==========================
-    # OVER 2.5
+    # OVER 2.5 PREMIUM
     # ==========================
 
     elif mercado == "Over 2.5":
 
         if (
-            score >= 14.5
-            and prob >= 0.64
-            and value >= 0.040
+            score >= 15.5
+            and prob >= 0.67
+            and value >= 0.045
             and total_lambda is not None
-            and total_lambda >= 2.95
-            and 1.60 <= odd <= 2.55
+            and total_lambda >= 3.05
+            and 1.65 <= odd <= 2.40
         ):
             nivel = "NORMAL"
 
         if (
-            score >= 16.5
-            and prob >= 0.68
-            and value >= 0.055
+            score >= 17
+            and prob >= 0.70
+            and value >= 0.060
             and total_lambda is not None
-            and total_lambda >= 3.20
-            and 1.60 <= odd <= 2.25
+            and total_lambda >= 3.25
+            and 1.65 <= odd <= 2.20
         ):
             nivel = "FUERTE"
 
         if (
-            score >= 18.5
-            and prob >= 0.72
-            and value >= 0.075
+            score >= 19
+            and prob >= 0.74
+            and value >= 0.080
             and total_lambda is not None
-            and total_lambda >= 3.45
-            and 1.60 <= odd <= 2.05
+            and total_lambda >= 3.50
+            and 1.65 <= odd <= 2.00
         ):
             nivel = "ELITE"
 
-        # Seguridad extra para liga MEDIA:
-        # No permitir que una cuota alta sea tratada como demasiado fuerte.
         if nivel_liga == "MEDIA":
 
-            if odd >= 2.05 and nivel == "ELITE":
+            if odd >= 2.00 and nivel == "ELITE":
                 nivel = "FUERTE"
 
-            if odd >= 2.25 and nivel == "FUERTE":
+            if odd >= 2.20 and nivel == "FUERTE":
                 nivel = "NORMAL"
 
     # ==========================
@@ -353,15 +325,11 @@ def clasificar_nivel_pick(
 
     elif mercado == "Under 2.5":
 
-        # Under 2.5 debe ser más defensivo que agresivo.
-        # No permitimos Under 2.5 si la lambda total es alta.
         if total_lambda is None:
             return "DESCARTADA"
 
-        # NORMAL:
-        # Partido con expectativa baja/media de goles.
         if (
-            score >= 13.5
+            score >= 12.8
             and prob >= 0.58
             and value >= 0.035
             and total_lambda <= 2.35
@@ -369,8 +337,6 @@ def clasificar_nivel_pick(
         ):
             nivel = "NORMAL"
 
-        # FUERTE:
-        # Mejor probabilidad, mejor value y lambda más baja.
         if (
             score >= 15.0
             and prob >= 0.61
@@ -380,8 +346,6 @@ def clasificar_nivel_pick(
         ):
             nivel = "FUERTE"
 
-        # ELITE:
-        # Under muy claro. No se fuerza.
         if (
             score >= 17.0
             and prob >= 0.64
@@ -391,8 +355,6 @@ def clasificar_nivel_pick(
         ):
             nivel = "ELITE"
 
-        # Seguridad:
-        # Si la liga es MEDIA, no exagerar nivel en cuotas altas.
         if nivel_liga == "MEDIA":
 
             if odd >= 2.05 and nivel == "ELITE":
@@ -401,8 +363,6 @@ def clasificar_nivel_pick(
             if odd >= 2.20 and nivel == "FUERTE":
                 nivel = "NORMAL"
 
-        # Seguridad dura:
-        # Si lambda está por encima de 2.45, no mandamos Under 2.5.
         if total_lambda > 2.45:
             nivel = "DESCARTADA"
 
@@ -413,7 +373,7 @@ def clasificar_nivel_pick(
     elif mercado == "BTTS":
 
         if (
-            score >= 14.5
+            score >= 13.8
             and prob >= 0.60
             and value >= 0.040
             and total_lambda is not None
@@ -487,13 +447,6 @@ def calcular_stake_por_nivel(
     total_lambda=None,
     nivel_liga=None
 ):
-    """
-    Devuelve:
-    - nivel
-    - stake
-
-    Esta función es usada por main.py.
-    """
 
     nivel = clasificar_nivel_pick(
         mercado=mercado,
@@ -512,7 +465,6 @@ def calcular_stake_por_nivel(
 
 # ====================================
 # STAKE KELLY CONSERVADOR
-# Compatibilidad con main.py actual
 # ====================================
 
 def calcular_stake(bank, value, odd):
@@ -531,9 +483,6 @@ def calcular_stake(bank, value, odd):
 
         kelly = value / (odd - 1)
 
-        # Conservador:
-        # mínimo 0.3% del bank
-        # máximo 1.5% del bank
         kelly = max(0.003, min(kelly, 0.015))
 
         stake = bank * kelly

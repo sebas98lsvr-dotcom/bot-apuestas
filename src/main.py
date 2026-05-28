@@ -382,7 +382,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.55,
                 "min_odd": 1.30,
                 "max_odd": 1.78,
-                "min_score": 13
+                "min_score": 12.5
             }
 
         if mercado == "Over 2.5":
@@ -402,7 +402,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "max_lambda": 2.35,
                 "min_odd": 1.55,
                 "max_odd": 2.35,
-                "min_score": 13.5
+                "min_score": 12.5,
             }
 
         if mercado == "BTTS":
@@ -424,17 +424,17 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.70,
                 "min_odd": 1.35,
                 "max_odd": 1.78,
-                "min_score": 13
+                "min_score": 12.5
             }
 
         if mercado == "Over 2.5":
             return {
-                "min_value": 0.04,
-                "min_prob": 0.64,
-                "min_lambda": 2.95,
-                "min_odd": 1.60,
-                "max_odd": 2.55,
-                "min_score": 15
+                "min_value": 0.045,
+                "min_prob": 0.67,
+                "min_lambda": 3.05,
+                "min_odd": 1.65,
+                "max_odd": 2.40,
+                "min_score": 16
             }
 
         if mercado == "Under 2.5":
@@ -444,7 +444,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "max_lambda": 2.25,
                 "min_odd": 1.60,
                 "max_odd": 2.30,
-                "min_score": 14.5
+                "min_score": 13.8
             }
 
         if mercado == "BTTS":
@@ -454,7 +454,7 @@ def obtener_filtros_mercado(nivel_liga, mercado):
                 "min_lambda": 2.70,
                 "min_odd": 1.70,
                 "max_odd": 2.30,
-                "min_score": 15
+                "min_score": 14.2
             }
 
     return None
@@ -742,7 +742,7 @@ def validar_over25_contexto(
             f"Visitante con muchas porterías en cero: {away_clean_sheets}/{away_pj}"
         )
 
-    if lamV < 0.70:
+    if lamV < 0.95:
         razones.append(
             f"Lambda visitante baja para Over 2.5: {round(lamV,2)}"
         )
@@ -1442,7 +1442,7 @@ def main():
                                 )
 
                                 score = (
-                                    (val * 100)
+                                    (val * 70)
                                     + (prob_o15 * 10)
                                     + total_lambda
                                 )
@@ -1574,10 +1574,13 @@ def main():
                                 )
 
                                 score = (
-                                    (val * 100)
+                                    (val * 70)
                                     + (prob_o * 10)
                                     + total_lambda
                                 )
+
+                                # Over 2.5 premium
+                                score -= 1.0
 
                                 if odd < 1.60:
 
@@ -1641,6 +1644,9 @@ def main():
                                         total_lambda=total_lambda,
                                         nivel_liga=nivel_liga
                                     )
+
+                                    # Reducir exposición Over 2.5
+                                    stake = round(stake * 0.70, 2)
 
                                     if nivel_pick == "DESCARTADA":
                                         print(
@@ -1733,7 +1739,7 @@ def main():
                                     continue
 
                                 score = (
-                                    (val * 100)
+                                    (val * 70)
                                     + (prob_u25 * 10)
                                     + ((3.0 - total_lambda) * 2)
                                 )
@@ -1872,7 +1878,7 @@ def main():
                                 )
 
                                 score = (
-                                    (val * 100)
+                                    (val * 70)
                                     + (prob_b * 10)
                                     + total_lambda
                                 )
